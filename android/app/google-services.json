@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "918320702070",
+    "project_id": "isjtouchhealth-app",
+    "storage_bucket": "isjtouchhealth-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:918320702070:android:087688d09a3a62759d3557",
+        "android_client_info": {
+          "package_name": "com.example.touch_health"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDq0-D8VGUevmyR3nYNIjoGF1ocUnq5TN8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
