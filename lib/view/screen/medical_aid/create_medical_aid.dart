@@ -57,14 +57,14 @@ class _CreateMedicalAidState extends State<CreateMedicalAid> {
   Item("LMPS (Liberty Medical Plan)"),
 ];
 
-final Map<String, dynamic> _userData = CacheData.getMapData(key: "medicalAidData");
+Map<String, dynamic> _userData = CacheData.getMapData(key: "medicalAidData");
 
 void _updateMedicalAidData() {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
       if (_medicalAidName == _userData['medicalaidname'] &&
       _medicalAidNumber == _userData['medicalaidnumber'] &&
-      _patientId == _userData['uid'] &&
+      _patientId == _userData['userId'] &&
       _medicalAidId == _userData['medicalaidnumber']) {
         context.pop();
       } else {
@@ -74,7 +74,7 @@ void _updateMedicalAidData() {
               medicalaidname: _medicalAidName ?? _userData['medicalaidname'],
               medicalaidnumber: _medicalAidNumber ?? _userData['medicalaidnumber'],
               medicaliadid: _medicalAidId ?? _userData['medicalaidid'],
-              userId: _patientId ?? _userData['uid'],
+              userId: _patientId ?? _userData['userId'],
             )
             .then((_) => context.pop());
       }
@@ -83,7 +83,7 @@ void _updateMedicalAidData() {
 
   @override
   Widget build(BuildContext context) {
-    print("Medical Aid Data in Create Medical Aid: $_userData");
+    //print("Medical Aid Data in Create Medical Aid: $_userData");
     return BlocConsumer<MedicalAidCubit, AccountState>(
     listener: (context, state) {
       if (state is ProfileUpdateLoading) {
@@ -95,43 +95,50 @@ void _updateMedicalAidData() {
         _isLoading = false;
         customSnackBar(context, state.message, ColorManager.error);
       }
+      if (state is AccountSuccess) {
+      // update local data
+        _userData = state.medicalAidDataModel.toJson();
+    }
+    //print("Medical Aid Data in Create Medical Aid: $_userData");
     },
     builder: (context, state) {
-      return Scaffold(
-        backgroundColor: context.theme.scaffoldBackgroundColor,
-        body: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-            child: Column(
-              children: [
-                Gap(32.h),
-                const CustomTitleBackButton(title: "Create Medical Aid"),
-                Gap(20.h),
-                _buildUserCard(
-                  context,
-                  char: (_userData['name']?.isNotEmpty ?? false) ? _userData['name'][0] : "?",
-                  name: _userData['name'] ?? "Unknown",
-                ),
-                _buildMedicalAidDataFields(context, _userData),
-                Gap(28.h),
-                CustomButton(
-                  widget: _isLoading ? const ButtonLoadingIndicator() : null,
-                  isDisabled: _isLoading,
-                  title: "Update",
-                  onPressed: _updateMedicalAidData,
-                ),
-                Gap(14.h),
-                CustomButton(
-                  title: "Cancel",
-                  backgroundColor: ColorManager.error,
-                  onPressed: () => context.pop(),
-                ),
-                Gap(22.h),
-              ],
+        //print("Medical Aid Data in Create Medical Aid: $_userData");
+        return Scaffold(
+          backgroundColor: context.theme.scaffoldBackgroundColor,
+          body: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
+              child: Column(
+                children: [
+                  Gap(32.h),
+                  const CustomTitleBackButton(title: "Create Medical Aid"),
+                  Gap(20.h),
+                  _buildUserCard(
+                    context,
+                    char: (_userData['name']?.isNotEmpty ?? false) ? _userData['name'][0] : "?",
+                    name: _userData['name'] ?? "Unknown",
+                  ),
+                  _buildMedicalAidDataFields(context, _userData),
+                  Gap(28.h),
+                  CustomButton(
+                    widget: _isLoading ? const ButtonLoadingIndicator() : null,
+                    isDisabled: _isLoading,
+                    title: "Update",
+                    onPressed: _updateMedicalAidData,
+                  ),
+                  Gap(14.h),
+                  CustomButton(
+                    title: "Cancel",
+                    backgroundColor: ColorManager.error,
+                    onPressed: () => context.pop(),
+                  ),
+                  Gap(22.h),
+                ],
+              ),
             ),
           ),
-        ),
-      );
+        );
+       // fallback
     },
   );
   

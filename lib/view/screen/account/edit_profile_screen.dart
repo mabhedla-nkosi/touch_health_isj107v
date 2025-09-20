@@ -136,7 +136,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    print("UserData in EditProfileScreen: $_userData");
+    //print("UserData in EditProfileScreen: $_userData");
     return BlocConsumer<AccountCubit, AccountState>(
       listener: (context, state) {
         if (state is ProfileUpdateLoading) {

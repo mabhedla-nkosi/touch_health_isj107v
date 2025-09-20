@@ -15,6 +15,7 @@ class MedicalAidCubit extends Cubit<AccountState> {
 
   Future<void> getMedicalAidData() async {
     emit(AccountLoading());
+    await Future.delayed(const Duration(milliseconds: 400));
     try {
       // Check if user is authenticated
       final currentUser = FirebaseAuth.instance.currentUser;
@@ -35,30 +36,63 @@ class MedicalAidCubit extends Cubit<AccountState> {
       }
       
       MedicalAidDataModel? medicalAidDataModel;
-      _firestore
+      final doc = await _firestore
           .collection('medicalaid')
           .doc(currentUser.uid)
-          .snapshots()
-          .listen((event) {
-        if (event.exists && event.data() != null) {
-          medicalAidDataModel = MedicalAidDataModel.fromJson(event.data()!);
-          //CacheData.setData(key: "name", value: medicalAidDataModel!.name);
-          CacheData.setMapData(key: "medicalAidData", value: medicalAidDataModel!.toJson());
-          emit(AccountSuccess(medicalAidDataModel: medicalAidDataModel!));
+          .get();
+
+          print("Medical Aid Doc: $doc");
+
+      // _firestore
+      //     .collection('medicalaid')
+      //     .doc(currentUser.uid)
+      //     .snapshots()
+      //     .listen((event) {
+      //   if (event.exists && event.data() != null) {
+      //     medicalAidDataModel = MedicalAidDataModel.fromJson(event.data()!);
+      //     //CacheData.setData(key: "name", value: medicalAidDataModel!.name);
+      //     CacheData.setMapData(key: "medicalAidData", value: medicalAidDataModel!.toJson());
+      //     emit(AccountSuccess(medicalAidDataModel: medicalAidDataModel!));
+      //   }
+      //    else {
+      //     // Create fallback user data if document doesn't exist
+      //     final fallbackUserData = MedicalAidDataModel(
+      //       //name: currentUser.displayName ?? 'User',
+      //       userId: currentUser.uid,
+      //       medicalaidname: '',
+      //       medicalaidnumber: '',
+      //       medicaliadid: '',
+      //     );
+      //     //CacheData.setData(key: "name", value: fallbackUserData.name);
+      //     CacheData.setMapData(key: "medicalAidData", value: fallbackUserData.toJson());
+      //     emit(AccountSuccess(medicalAidDataModel: fallbackUserData));
+      //   }
+      // });
+      if (doc.exists && doc.data() != null) {
+          medicalAidDataModel = MedicalAidDataModel.fromJson(doc.data()!);
+
+          await CacheData.setMapData(
+            key: "medicalAidData",
+            value: medicalAidDataModel.toJson(),
+          );
+
+          emit(AccountSuccess(medicalAidDataModel: medicalAidDataModel));
         } else {
           // Create fallback user data if document doesn't exist
           final fallbackUserData = MedicalAidDataModel(
-            //name: currentUser.displayName ?? 'User',
             userId: currentUser.uid,
             medicalaidname: '',
             medicalaidnumber: '',
             medicaliadid: '',
           );
-          //CacheData.setData(key: "name", value: fallbackUserData.name);
-          CacheData.setMapData(key: "medicalAidData", value: fallbackUserData.toJson());
+
+          await CacheData.setMapData(
+            key: "medicalAidData",
+            value: fallbackUserData.toJson(),
+          );
+
           emit(AccountSuccess(medicalAidDataModel: fallbackUserData));
         }
-      });
     } on FirebaseException catch (err) {
       emit(AccountFailure(message: err.toString()));
     } catch (err) {
@@ -77,19 +111,36 @@ class MedicalAidCubit extends Cubit<AccountState> {
     emit(ProfileUpdateLoading());
     try {
       await Future.delayed(const Duration(milliseconds: 400));
+      // await _firestore
+      //     .collection('medicalaid')
+      //     .doc(FirebaseAuth.instance.currentUser!.uid)
+      //     .update({
+      //       'medicalaidname': medicalaidname,
+      //       'userId': FirebaseAuth.instance.currentUser!.uid,
+      //       'medicalaidnumber': medicalaidnumber,
+      //       'medicaliadid': medicaliadid,
+      //     })
+      //     .whenComplete(() => emit(ProfileUpdateSuccess()))
+      //     .timeout(const Duration(seconds: 5),
+      //         onTimeout: () => emit(ProfileUpdateFailure(
+      //             message: "There was an error, please try again")));
+
       await _firestore
-          .collection('medicalaid')
-          .doc(FirebaseAuth.instance.currentUser!.uid)
-          .update({
-            'medicalaidname': medicalaidname,
-            'userId': userId,
-            'medicalaidnumber': medicalaidnumber,
-            'medicaliadid': medicaliadid,
-          })
-          .whenComplete(() => emit(ProfileUpdateSuccess()))
-          .timeout(const Duration(seconds: 5),
-              onTimeout: () => emit(ProfileUpdateFailure(
-                  message: "There was an error, please try again")));
+        .collection('medicalaid')
+        .doc(FirebaseAuth.instance.currentUser!.uid)
+        .set({
+          'medicalaidname': medicalaidname,
+          'userId': FirebaseAuth.instance.currentUser!.uid,
+          'medicalaidnumber': medicalaidnumber,
+          'medicaliadid': medicaliadid,
+        }, SetOptions(merge: true)) // <--- important
+        .whenComplete(() => emit(ProfileUpdateSuccess()))
+        .timeout(
+          const Duration(seconds: 5),
+          onTimeout: () => emit(ProfileUpdateFailure(
+            message: "There was an error, please try again",
+          )),
+        );
     } on FirebaseException catch (err) {
       emit(ProfileUpdateFailure(message: err.toString()));
     }
