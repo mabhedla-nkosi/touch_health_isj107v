@@ -10,7 +10,7 @@ import '../../../core/cache/cache.dart';
 class ApiService {
   // static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   // static final FirebaseAuth _auth = FirebaseAuth.instance;
-  final String baseUrl = "https://postgres-api-hrd8.onrender.com";
+  final String baseUrl = "";
 
   // static Future<List> checkMapLockStatus() async {
   //   final response = await http.get(Uri.parse('$baseUrl/enable_map'));
