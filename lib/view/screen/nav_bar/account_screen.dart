@@ -1,11 +1,17 @@
 import 'package:touchhealth/controller/medical_aid/medical_aid_cubit.dart' as medicalaid;
+import 'package:touchhealth/controller/medication/medication_cubit.dart' as medication;
+import 'package:touchhealth/controller/labscreening/labscreening_cubit.dart' as labscreening;
+import 'package:touchhealth/controller/conditions/conditions_cubit.dart' as conditions;
 import 'package:touchhealth/core/cache/cache.dart';
 import 'package:touchhealth/core/utils/theme/color.dart';
 import 'package:touchhealth/core/utils/constant/image.dart';
 import 'package:touchhealth/core/router/routes.dart';
 import 'package:touchhealth/core/utils/helper/custom_dialog.dart';
 import 'package:touchhealth/core/utils/helper/extention.dart';
+import 'package:touchhealth/data/model/conditions_model.dart';
+import 'package:touchhealth/data/model/labscreening_model.dart';
 import 'package:touchhealth/data/model/medical_aid_model.dart';
+import 'package:touchhealth/data/model/medication_model.dart';
 import 'package:touchhealth/data/model/user_data_model.dart';
 import 'package:touchhealth/controller/account/account_cubit.dart' as account;
 import 'package:flutter/material.dart';
@@ -30,10 +36,16 @@ class _AccountScreenState extends State<AccountScreen> {
     super.initState();
     context.bloc<account.AccountCubit>().getprofileData();
     context.bloc<medicalaid.MedicalAidCubit>().getMedicalAidData();
+    context.bloc<conditions.ConditionsCubit>().getConditionsData();
+    context.bloc<labscreening.LabScreeningCubit>().getLabScreeningData();
+    context.bloc<medication.MedicationCubit>().getMedicationData();
   }
 
   UserDataModel? _userData;
   MedicalAidDataModel? _medicalAidData;
+  MedicationDataModel? _medicationData;
+  LabScreeningDataModel? _labscreeningData;
+  ConditionsDataModel? _conditionsData;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +65,30 @@ class _AccountScreenState extends State<AccountScreen> {
           if (state is medicalaid.AccountSuccess) {
             // handle medical aid data here
             _medicalAidData = state.medicalAidDataModel;
+          }
+        },
+      ),
+      BlocListener<medication.MedicationCubit, medication.AccountState>(
+        listener: (context, state) {
+          if (state is medication.AccountSuccess) {
+            // handle medical aid data here
+            _medicationData = state.medicationDataModel;
+          }
+        },
+      ),
+      BlocListener<labscreening.LabScreeningCubit, labscreening.AccountState>(
+        listener: (context, state) {
+          if (state is labscreening.AccountSuccess) {
+            // handle medical aid data here
+            _labscreeningData = state.labDataModel;
+          }
+        },
+      ),
+      BlocListener<conditions.ConditionsCubit, conditions.AccountState>(
+        listener: (context, state) {
+          if (state is conditions.AccountSuccess) {
+            // handle medical aid data here
+            _conditionsData = state.conditionsDataModel;
           }
         },
       ),
@@ -89,10 +125,31 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                   divider,
                   BuildProfileCard(
-                    title: "Capture Medical Aid",
+                    title: "Medical Aid",
                     image: ImageManager.termsIcon,
                     onPressed: () =>
                         Navigator.pushNamed(context, RouteManager.editMedicalAid),
+                  ),
+                  divider,
+                  BuildProfileCard(
+                    title: "Medication",
+                    image: ImageManager.termsIcon,
+                    onPressed: () =>
+                        Navigator.pushNamed(context, RouteManager.viewMedication),
+                  ),
+                  divider,
+                  BuildProfileCard(
+                    title: "Lab Screening",
+                    image: ImageManager.termsIcon,
+                    onPressed: () =>
+                        Navigator.pushNamed(context, RouteManager.viewLabScreening),
+                  ),
+                  divider,
+                  BuildProfileCard(
+                    title: "Conditions",
+                    image: ImageManager.termsIcon,
+                    onPressed: () =>
+                        Navigator.pushNamed(context, RouteManager.viewConditions),
                   ),
                   divider,
                   BuildProfileCard(
@@ -151,7 +208,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   ),
                   divider,
                   BuildProfileCard(
-                      title: "logout",
+                      title: "Logout",
                       iconData: Icons.logout,
                       color: ColorManager.error,
                       onPressed: () => customDialog(

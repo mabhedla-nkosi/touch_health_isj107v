@@ -1,6 +1,8 @@
+import 'package:touchhealth/controller/conditions/conditions_cubit.dart';
+import 'package:touchhealth/controller/labscreening/labscreening_cubit.dart';
 import 'package:touchhealth/controller/medical_aid/medical_aid_cubit.dart';
+import 'package:touchhealth/controller/medication/medication_cubit.dart';
 import 'package:touchhealth/controller/permissions/permissions_cubit.dart';
-import 'package:touchhealth/core/cache/cache.dart';
 import 'package:touchhealth/controller/chat/chat_cubit.dart';
 import 'package:touchhealth/controller/validation/formvalidation_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -12,8 +14,7 @@ import 'core/utils/theme/color.dart';
 import 'core/utils/helper/responsive.dart';
 import 'core/router/app_router.dart';
 import 'core/utils/theme/app_theme.dart';
-import 'controller/account/account_cubit.dart';
-import 'controller/medical_aid/medical_aid_cubit.dart';
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -37,6 +38,15 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (_) => MedicalAidCubit(),
+        ),
+        BlocProvider(
+          create: (_) => ConditionsCubit(),
+        ),
+        BlocProvider(
+          create: (_) => LabScreeningCubit(),
+        ),
+        BlocProvider(
+          create: (_) => MedicationCubit(),
         ),
       ],
       child: ScreenUtilInit(

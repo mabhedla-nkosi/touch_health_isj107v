@@ -1,4 +1,3 @@
-import 'dart:developer';
 
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -40,8 +39,6 @@ class MedicalAidCubit extends Cubit<AccountState> {
           .collection('medicalaid')
           .doc(currentUser.uid)
           .get();
-
-          print("Medical Aid Doc: $doc");
 
       // _firestore
       //     .collection('medicalaid')

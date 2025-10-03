@@ -44,18 +44,18 @@ class ValidationCubit extends Cubit<FormvalidationState> {
     if (value == null || value.isEmpty) {
       return 'Please enter a password';
     }
-    if (value.length < 8) {
-      return 'Password must be at least 8 characters long';
-    }
-    if (!_hasUpperCase(value)) {
-      return 'Password must have at least one uppercase character';
-    }
-    if (!_hasLowerCase(value)) {
-      return 'Password must have at least one lowercase character';
-    }
-    if (!_hasDigit(value)) {
-      return 'Password must have at least one number';
-    }
+    // if (value.length < 8) {
+    //   return 'Password must be at least 8 characters long';
+    // }
+    // if (!_hasUpperCase(value)) {
+    //   return 'Password must have at least one uppercase character';
+    // }
+    // if (!_hasLowerCase(value)) {
+    //   return 'Password must have at least one lowercase character';
+    // }
+    // if (!_hasDigit(value)) {
+    //   return 'Password must have at least one number';
+    // }
     // if (firebaseException != null ||
     //     firebaseException != '' ||
     //     firebaseException?.isNotEmpty == true) {

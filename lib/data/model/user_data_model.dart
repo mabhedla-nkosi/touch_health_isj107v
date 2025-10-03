@@ -49,4 +49,9 @@ class UserDataModel {
       'nationality': nationality,
     };
   }
+
+  @override
+  String toString() {
+    return 'User(userId: $userId, name: $name, surname: $surname, email: $email, gender: $gender)';
+  }
 }

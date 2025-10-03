@@ -160,3 +160,13 @@ class ChatDeleteFailure extends AccountState {
 //   AccountLoadedFailure({required this.message});
 // }
 
+
+class AccountLoaded extends AccountState {
+  final apiUserService.User user;
+  AccountLoaded(this.user);
+}
+
+class AccountError extends AccountState {
+  final String message;
+  AccountError(this.message);
+}

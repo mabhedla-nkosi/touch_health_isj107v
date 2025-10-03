@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:touchhealth/data/source/postgres/postgres_service.dart';
 
 import '../../../core/cache/cache.dart';
 import '../../../data/source/firebase/firebase_service.dart';
@@ -15,6 +16,8 @@ part 'sign_in_state.dart';
 
 class SignInCubit extends Cubit<SignInState> {
   SignInCubit() : super(SignInInitial());
+
+  ApiService apiService = ApiService();
 
   String? _validateFirebaseException(String? value) {
     if (value != null) {
@@ -59,6 +62,23 @@ class SignInCubit extends Cubit<SignInState> {
   Future<void> userSignIn(
       {required String email, required String password}) async {
     emit(SignInLoading());
+
+    // Demo login credentials for testing
+    if (email.toLowerCase() == 'demo@touchhealth.com' && password == 'demo123') {
+      log("Demo login detected - bypassing Firebase auth");
+      
+      // Set demo user data in cache
+      await CacheData.setMapData(key: "userData", value: {
+        'name': 'Demo User',
+        'email': 'demo@touchhealth.com',
+        'uid': 'demo_user_001',
+        'offline': true,
+        'demo': true,
+      });
+      
+      emit(SignInSuccess());
+      return;
+    }
     
     try {
       // Use FirebaseService.logIn for consistent error handling and offline support
@@ -76,7 +96,7 @@ class SignInCubit extends Cubit<SignInState> {
       } else {
         // Check for offline mode
         final userData = CacheData.getMapData(key: "userData");
-        if (userData != null && userData['offline'] == true) {
+        if (userData['offline'] == true) {
           emit(SignInSuccess());
         } else {
           emit(SignInFailure(message: "Authentication failed"));
@@ -94,7 +114,7 @@ class SignInCubit extends Cubit<SignInState> {
           err.toString().contains('TimeoutException')) {
         log("Network error detected, checking offline mode");
         final userData = CacheData.getMapData(key: "userData");
-        if (userData != null && userData['offline'] == true) {
+        if (userData['offline'] == true) {
           emit(SignInSuccess());
         } else {
           emit(SignInFailure(message: "Network error. Please check your connection."));
@@ -104,4 +124,5 @@ class SignInCubit extends Cubit<SignInState> {
       }
     }
   }
+
 }

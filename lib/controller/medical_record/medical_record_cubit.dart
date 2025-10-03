@@ -69,7 +69,7 @@ class MedicalRecordCubit extends Cubit<MedicalRecordState> {
         // Simulate API call and display medical record
         setTimeout(() => {
           const content = document.getElementById('content');
-          content.innerHTML = \`
+          content.innerHTML = `
             <div class="success">
               ✅ Medical record loaded successfully for Patient ID: $patientId
             </div>

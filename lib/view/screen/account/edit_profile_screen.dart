@@ -13,6 +13,7 @@ import '../../../core/utils/theme/color.dart';
 import '../../../controller/validation/formvalidation_cubit.dart';
 import '../../widget/custom_drop_down_field.dart';
 import '../../widget/custom_scrollable_appbar.dart';
+import 'package:touchhealth/core/service/user_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -22,6 +23,15 @@ class EditProfileScreen extends StatefulWidget {
 }
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
+
+  final userService = UserService();
+  late Future<User?> futureUser;
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<AccountCubit>().fetchUserById(1);
+  }
 
   @override
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -136,7 +146,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    //print("UserData in EditProfileScreen: $_userData");
+    User user = User(userid: 1);
+    
     return BlocConsumer<AccountCubit, AccountState>(
       listener: (context, state) {
         if (state is ProfileUpdateLoading) {
@@ -153,6 +164,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         }
       },
       builder: (context, state) {
+        if (state is AccountLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (state is AccountError) {
+          return Center(child: Text("Error: ${state.message}"));
+        }
+        if (state is AccountLoaded)
+        {
+          user = state.user;
+          //print("UserData in EditProfileScreen: $user");
+        }
         return Scaffold(
           body: SingleChildScrollView(
             child: Column(
@@ -168,14 +190,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     children: [
                       _buildUserCard(context,
                           //char: _userData['name'][0], name: _userData['name']),
-                          char: (_userData['name']?.isNotEmpty ?? false)
-                                ? _userData['name'][0]
+                          char: (user.name?.isNotEmpty ?? false)
+                                ? user.name!.substring(0, 1)
                                 : "?",
-                            name: _userData['name'] ?? "Unknown",
+                            name: user.name ?? "Unknown",
                           ),
                       _buildUserProfileDataFields(
                         context,
                         _userData,
+                        user
                       ),
                       Gap(28.h),
                       CustomButton(
@@ -245,14 +268,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildUserProfileDataFields(
-      BuildContext context, Map<String, dynamic> userData) {
+      BuildContext context, Map<String, dynamic> userData, User user) {
     final cubit = context.bloc<ValidationCubit>();
     return Form(
       key: _formKey,
       child: Column(
         children: [
           CustomTextFormField(
-            initialValue: userData['name'],
+            //initialValue: userData['name'],
+            initialValue: user.name,
             keyboardType: TextInputType.name,
             title: "Name",
             hintText: "Enter your Name",
@@ -262,7 +286,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             validator: cubit.nameValidator,
           ),
           CustomTextFormField(
-            initialValue: userData['surname'],
+            //initialValue: userData['surname'],
+            initialValue: user.surname,
             keyboardType: TextInputType.name,
             title: "Surname",
             hintText: "Enter your Surname",
@@ -272,7 +297,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             validator: cubit.nameValidator,
           ),
           CustomTextFormField(
-            initialValue: userData['id_passportnumber'],
+            //initialValue: userData['id_passportnumber'],
+            initialValue: user.id_passportnumber,
             keyboardType: TextInputType.text,
             title: "Id / passport number",
             hintText: "Enter your ID or Passport Number",
@@ -282,7 +308,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             //validator: cubit.nameValidator,
           ),
           CustomTextFormField(
-            initialValue: userData['contactinfo'],
+            //initialValue: userData['contactinfo'],
+            initialValue: user.contactinfo,
             keyboardType: TextInputType.phone,
             title: "Phone Number",
             hintText: "Enter your phone Number",
@@ -292,8 +319,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             validator: cubit.phoneNumberValidator,
           ),
           CustomTextFormField(
-            initialValue: userData['dob'],
-            //initialValue: "dd/mm/yyyy",
+            //initialValue: userData['dob'],
+            initialValue: user.dob,
             keyboardType: TextInputType.datetime,
             title: "Date of birth",
             hintText: "Enter your Date of birth",
@@ -309,9 +336,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             onSaved: (data) {
               _gender = data!.name.toString();
             },
-            value: userData['gender'] != null
+            // value: userData['gender'] != null
+            //   ? genderList.firstWhere(
+            //       (c) => c.name == userData['gender'],
+            //       orElse: () => genderList.first, // fallback
+            //     )
+            //   : null,
+            value: user.gender != null
               ? genderList.firstWhere(
-                  (c) => c.name == userData['gender'],
+                  (c) => c.name == user.gender,
                   orElse: () => genderList.first, // fallback
                 )
               : null,
@@ -320,9 +353,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               hintText: "Enter your nationality",
               title: "Nationality",
               items: nationalityList,
-              value: userData['nationality'] != null
+              // value: userData['nationality'] != null
+              // ? nationalityList.firstWhere(
+              //     (c) => c.name == userData['nationality'],
+              //     orElse: () => nationalityList.first, // fallback
+              //   )
+              // : null,
+              value: user.nationality != null
               ? nationalityList.firstWhere(
-                  (c) => c.name == userData['nationality'],
+                  (c) => c.name == user.nationality,
                   orElse: () => nationalityList.first, // fallback
                 )
               : null,

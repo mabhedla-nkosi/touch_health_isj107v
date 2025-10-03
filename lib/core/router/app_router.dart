@@ -17,6 +17,9 @@ import '../../controller/launch_uri/launch_uri_cubit.dart';
 import '../../controller/maps/maps_cubit.dart';
 import '../../view/screen/account/about_us/about_us_screen.dart';
 import '../../view/screen/medical_aid/create_medical_aid.dart';
+import '../../view/screen/conditions/view_conditions.dart';
+import '../../view/screen/labscreening/view_labscreening.dart';
+import '../../view/screen/medication/view_medication.dart';
 import '../../view/screen/account/change_password/new_pass_word.dart';
 import '../../view/screen/account/change_password/old_password_screen.dart';
 import '../../view/screen/auth/create_profile.dart';
@@ -29,6 +32,14 @@ import '../../view/screen/nav_bar/nav_bar_screen_.dart';
 import '../../view/screen/account/edit_profile_screen.dart';
 import '../../view/screen/splash_screen.dart';
 import 'page_transition.dart';
+import 'package:touchhealth/view/screen/practitioner/practitioner_login_screen.dart';
+import 'package:touchhealth/view/screen/practitioner/practitioner_dashboard.dart';
+import 'package:touchhealth/view/screen/practitioner/patient_details_screen.dart';
+import 'package:touchhealth/view/screen/practitioner/add_medical_entry_screen.dart';
+import '../../controller/auth/practitioner_auth/practitioner_auth_cubit.dart';
+import '../../controller/practitioner/patient_search_cubit.dart';
+import 'package:touchhealth/view/screen/practitioner/edit_patient_screen.dart';
+import '../../controller/validation/formvalidation_cubit.dart';
 
 class AppRouter {
   AppRouter._();
@@ -94,6 +105,18 @@ class AppRouter {
         return PageTransitionManager.materialSlideTransition(
           const CreateMedicalAid(),
         );
+      case RouteManager.viewConditions:
+        return PageTransitionManager.materialSlideTransition(
+          const ViewConditions(),
+      );
+      case RouteManager.viewLabScreening:
+        return PageTransitionManager.materialSlideTransition(
+          const ViewLabscreening(),
+        );
+        case RouteManager.viewMedication:
+        return PageTransitionManager.materialSlideTransition(
+          const ViewMedication(),
+        );
       case RouteManager.oldPassword:
         return PageTransitionManager.materialSlideTransition(
           const OldPasswordScreen(),
@@ -139,6 +162,44 @@ class AppRouter {
       case RouteManager.appFeedback:
         return PageTransitionManager.materialSlideTransition(
             const AppFeedbackScreen());
+      case RouteManager.practitionerLogin:
+        return PageTransitionManager.materialPageRoute(MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (_) => PractitionerAuthCubit()),
+            BlocProvider(create: (_) => ValidationCubit()),
+          ],
+          child: const PractitionerLoginScreen(),
+        ));
+      case RouteManager.practitionerDashboard:
+        return PageTransitionManager.materialPageRoute(MultiBlocProvider(
+          providers: [
+            BlocProvider(create: (_) => PractitionerAuthCubit()),
+            BlocProvider(create: (_) => PatientSearchCubit()),
+          ],
+          child: const PractitionerDashboard(),
+        ));
+      case RouteManager.patientDetails:
+        final patient = settings.arguments as Map<String, dynamic>;
+        return PageTransitionManager.materialSlideTransition(BlocProvider(
+          create: (_) => PatientSearchCubit(),
+          child: PatientDetailsScreen(patient: patient),
+        ));
+      case RouteManager.addMedicalEntry:
+        final args = settings.arguments as Map<String, dynamic>;
+        return PageTransitionManager.materialSlideTransition(BlocProvider(
+          create: (_) => PatientSearchCubit(),
+          child: AddMedicalEntryScreen(
+            patientId: args['patientId'],
+            entryType: args['entryType'],
+          ),
+        ));
+      case RouteManager.editPatientDemographics:
+        final args = settings.arguments as Map<String, dynamic>;
+        return PageTransitionManager.materialSlideTransition(
+          EditPatientScreen(
+            patient: args,
+          ),
+        );
       default:
         return null;
     }

@@ -13,6 +13,9 @@ class RouteManager {
   static const voice = "/voice";
   static const editProfile = "/editProfile";
   static const editMedicalAid = "/editMedicalAid";
+  static const viewMedication = "/viewMedication";
+  static const viewConditions = "/viewConditions";
+  static const viewLabScreening = "/viewLabScreening";
   static const maps = "/maps";
   static const oldPassword = "/oldPassword";
   static const newPassword = "/newPassword";
@@ -27,4 +30,9 @@ class RouteManager {
   static const appUpdates = "/appUpdates";
   static const appSocialMedia = "/socialMedia";
   static const appFeedback = "/appFeedback";
+  static const String practitionerLogin = '/practitioner-login';
+  static const String practitionerDashboard = '/practitioner-dashboard';
+  static const String patientDetails = '/patient-details';
+  static const String addMedicalEntry = '/add-medical-entry';
+  static const String editPatientDemographics = '/edit-patient';
 }
