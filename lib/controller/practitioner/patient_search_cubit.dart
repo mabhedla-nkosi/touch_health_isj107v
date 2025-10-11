@@ -70,6 +70,29 @@ class PatientSearchCubit extends Cubit<PatientSearchState> {
     }
   }
 
+  Future<void> searchPatientsByEmail(String searchQuery) async {
+    if (searchQuery.isEmpty) {
+      // Show all demo patients when search is empty
+      emit(PatientSearchLoading());
+      try {
+        final patients = await PatientLookupService.searchPatientsByEmail('');
+        emit(PatientSearchSuccess(patients));
+      } catch (e) {
+        emit(PatientSearchError('Failed to load patients: ${e.toString()}'));
+      }
+      return;
+    }
+
+    emit(PatientSearchLoading());
+
+    try {
+      final patients = await PatientLookupService.searchPatientsByEmail(searchQuery);
+      emit(PatientSearchSuccess(patients));
+    } catch (e) {
+      emit(PatientSearchError('Search failed: ${e.toString()}'));
+    }
+  }
+
   Future<void> findPatientByMedicalNumber(String medicalNumber) async {
     emit(PatientSearchLoading());
 

@@ -38,7 +38,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String? _name;
   String? _userId;
   String? _surname;
-  String? _contactInfo;
+  String? _phone;
   String? _email;
   String? _password;
   String? _id_passportnumber;
@@ -119,7 +119,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _formKey.currentState!.save();
       if (_name == _userData['name'] &&
       _surname == _userData['surname'] &&
-      _contactInfo == _userData['contactinfo'] &&
+      _phone == _userData['phone'] &&
       _email == _userData['email'] &&
       _id_passportnumber == _userData['id_passportnumber'] &&
       _gender == _userData['gender'] &&
@@ -132,7 +132,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             .updateProfile(
               name: _name ?? _userData['name'],
               surname: _surname ?? _userData['surname'],
-              contactInfo: _contactInfo ?? _userData['contactInfo'],
+              phone: _phone ?? _userData['phone'],
               email: _email ?? _userData['email'],
               id_passportnumber: _id_passportnumber ?? _userData['id_passportnumber'],
               gender: _gender ?? _userData['gender'],
@@ -314,7 +314,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             title: "Phone Number",
             hintText: "Enter your phone Number",
             onSaved: (data) {
-              _contactInfo = data!;
+              _phone = data!;
             },
             validator: cubit.phoneNumberValidator,
           ),
