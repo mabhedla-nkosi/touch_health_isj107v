@@ -2,7 +2,7 @@ class UserDataModel {
   String? name;
   String? userId;
   String? surname;
-  String? contactInfo;
+  String? phone;
   String? email;
   String? password;
   String? id_passportnumber;
@@ -14,7 +14,7 @@ class UserDataModel {
     this.name,
     this.userId,
     this.surname,
-    this.contactInfo,
+    this.phone,
     this.email,
     this.password,
     this.id_passportnumber,
@@ -27,7 +27,7 @@ class UserDataModel {
       : name = json['name'] ?? '',
       userId = json['userid'] ?? '',
       surname = json['surname'] ?? '',
-      contactInfo = json['contactinfo'] ?? '',
+      phone = json['phone'] ?? '',
       email = json['email'] ?? '',
       password = json['password'] ?? '',
       id_passportnumber = json['id_passportnumber'] ?? '',
@@ -40,7 +40,7 @@ class UserDataModel {
       'name': name,
       'userid': userId,
       'surname': surname,
-      'contactinfo': contactInfo,
+      'phone': phone,
       'email': email,
       'password': password,
       'id_passportnumber': id_passportnumber,

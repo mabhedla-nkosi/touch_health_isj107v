@@ -164,10 +164,10 @@ class PatientLookupService {
     try {
       dev.log('Searching patients by name: $searchQuery');
       List<Map<String, dynamic>> results = [];
-      
       // Add demo patients if they match
       //final demoPatients = _getAllDemoPatients();
       List<PatientData> actualData =await dataService.getPatientData();
+          
 
     if (searchQuery.trim().isEmpty) {
       // If no search query, return all patients
@@ -211,6 +211,36 @@ class PatientLookupService {
       //     dev.log('Error fetching patient $i: $e');
       //   }
       // }
+      
+      return results;
+    } catch (e) {
+      dev.log('Error searching patients: $e');
+      return [];
+    }
+  }
+
+  static Future<List<Map<String, dynamic>>> searchPatientsByEmail(String searchQuery) async {
+    try {
+      dev.log('Searching patients by email: $searchQuery');
+      List<Map<String, dynamic>> results = [];
+      
+      // Add demo patients if they match
+      //final demoPatients = _getAllDemoPatients();
+      List<PatientData> actualData =await dataService.getPatientDataByEmail(searchQuery);
+
+    if (searchQuery.trim().isEmpty) {
+      // If no search query, return all patients
+      results = actualData.map((patient) => patient.toJson()).toList();
+    } else {
+      for (var patient in actualData) {
+        
+        if ((patient.email ?? "").toLowerCase().contains(searchQuery.toLowerCase())) {
+          final patientMap = patient.toJson();
+          patientMap["medicalNumber"] = "MED${patient.userid}";
+          results.add(patientMap);
+        }
+      }
+    }
       
       return results;
     } catch (e) {
@@ -350,8 +380,8 @@ class PatientLookupService {
       'name': userData['name'] ?? 'Unknown Patient',
       'email': userData['email'] ?? 'patient@example.com',
       'phone': userData['phone'] ?? '+1-555-0123',
-      'age': 25 + random.nextInt(50),
-      'gender': random.nextBool() ? 'Male' : 'Female',
+      'age': _getAge(userData['dob']),
+      'gender': (userData['gender']?.toString().toLowerCase() == 'male') ? 'Male' : 'Female',
       'bloodType': _getRandomBloodType(random),
       'lastVisit': DateTime.now().subtract(Duration(days: random.nextInt(90))).toIso8601String(),
       'status': 'Active',
@@ -424,6 +454,27 @@ class PatientLookupService {
     final bloodTypes = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
     return bloodTypes[random.nextInt(bloodTypes.length)];
   }
+
+  static String _getAge(String dobString) {
+    // Parse the string to a DateTime
+    final dob = DateTime.tryParse(dobString);
+    
+    if (dob == null) {
+      // If parsing fails, return a default value or empty string
+      return '';
+    }
+
+    final today = DateTime.now();
+    int age = today.year - dob.year;
+
+    // If birthday hasn't occurred yet this year, subtract 1
+    if (today.month < dob.month || (today.month == dob.month && today.day < dob.day)) {
+      age--;
+    }
+
+    return age.toString();
+  }
+
 
   static String _getRandomName(Random random) {
     final firstNames = ['John', 'Jane', 'Michael', 'Sarah', 'David', 'Emily', 'Robert', 'Lisa'];

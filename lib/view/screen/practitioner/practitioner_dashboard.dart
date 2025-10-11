@@ -505,7 +505,6 @@ class _PractitionerDashboardState extends State<PractitionerDashboard> {
   }
 
   void _viewPatientDetails(Map<String, dynamic> patient) {
-    print(patient);
     Navigator.pushNamed(
       context,
       RouteManager.patientDetails,

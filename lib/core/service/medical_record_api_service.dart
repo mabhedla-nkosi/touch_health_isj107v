@@ -5,9 +5,8 @@ import 'package:http/http.dart' as http;
 
 class MedicalRecordApiService {
   //static const String baseUrl = 'https://jsonplaceholder.typicode.com/users';
-  static const String baseUrl = 'http://10.0.2.2:5000/users';
-  
-  //http://10.0.2.2:5000/users - local
+  //static const String baseUrl = 'http://10.0.2.2:5000/users';
+  static const String baseUrl = 'https://postgres-api-hrd8.onrender.com';
   static const Duration timeoutDuration = Duration(seconds: 10);
 
   /// Get patient medical record by ID

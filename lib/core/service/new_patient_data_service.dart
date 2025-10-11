@@ -6,7 +6,7 @@ class PatientData {
   //DateTime? date;
   String? name; 
   String? surname;
-  String? contactinfo; 
+  String? phone; 
   String? email;
   String? id_passportnumber; 
   String? gender; 
@@ -19,7 +19,7 @@ class PatientData {
     this.userid,  
     this.name, 
     this.surname, 
-    this.contactinfo, 
+    this.phone, 
     this.email, 
     this.id_passportnumber, 
     this.gender,
@@ -33,7 +33,7 @@ class PatientData {
       userid: json['userid'],
       name: json['name'],
       surname: json['surname'],
-      contactinfo: json['contactinfo'],
+      phone: json['phone'],
       email: json['email'],
       id_passportnumber: json['id_passportnumber'],
       gender: json['gender'],
@@ -51,7 +51,7 @@ class PatientData {
       "userid": userid,
       "name": name,
       "surname": surname,
-      "contactinfo": contactinfo,
+      "phone": phone,
       "email": email,
       "id_passportnumber": id_passportnumber,
       "gender": gender,
@@ -63,7 +63,7 @@ class PatientData {
 
   @override
   String toString() {
-    return 'User(userId: $userid, name: $name, surname: $surname, email: $email, gender: $gender)';
+    return 'User(userId: $userid, name: $name, surname: $surname, email: $email, gender: $gender, dob: $dob)';
   }
 }
 
@@ -101,7 +101,8 @@ class Appointment {
 
 
 class PatientDataService {
-  final String baseUrl = "http://10.0.2.2:5000";
+  //final String baseUrl = "http://10.0.2.2:5000";
+  final String baseUrl = "https://postgres-api-hrd8.onrender.com";
     // for Android emulator
   // use http://localhost:5000 if on iOS simulator or web
 
@@ -113,6 +114,26 @@ class PatientDataService {
       final patients = decoded
           .map((e) => PatientData.fromJson(e['patient']))
           .toList();
+
+        return patients;
+    } else {
+      throw Exception("Failed to load users");
+    }
+  }
+
+  Future<List<PatientData>> getPatientDataByEmail(String emailAddress) async {
+    final encodedEmail = Uri.encodeComponent(emailAddress); 
+    final response = await http.get(Uri.parse("$baseUrl/patientData/email/$encodedEmail"));
+    if (response.statusCode == 200) {
+
+      // final decoded = jsonDecode(response.body) as List<dynamic>;
+      // final patients = decoded
+      //     .map((e) => PatientData.fromJson(e))
+      //     .toList();
+      final decoded = jsonDecode(response.body);      
+      
+      final patient = PatientData.fromJson(decoded);
+      final patients = [patient].toList();
 
         return patients;
     } else {

@@ -35,17 +35,17 @@ class _AccountScreenState extends State<AccountScreen> {
   void initState() {
     super.initState();
     context.bloc<account.AccountCubit>().getprofileData();
-    context.bloc<medicalaid.MedicalAidCubit>().getMedicalAidData();
-    context.bloc<conditions.ConditionsCubit>().getConditionsData();
-    context.bloc<labscreening.LabScreeningCubit>().getLabScreeningData();
-    context.bloc<medication.MedicationCubit>().getMedicationData();
+    // context.bloc<medicalaid.MedicalAidCubit>().getMedicalAidData();
+    // context.bloc<conditions.ConditionsCubit>().getConditionsData();
+    // context.bloc<labscreening.LabScreeningCubit>().getLabScreeningData();
+    // context.bloc<medication.MedicationCubit>().getMedicationData();
   }
 
   UserDataModel? _userData;
-  MedicalAidDataModel? _medicalAidData;
-  MedicationDataModel? _medicationData;
-  LabScreeningDataModel? _labscreeningData;
-  ConditionsDataModel? _conditionsData;
+  // MedicalAidDataModel? _medicalAidData;
+  // MedicationDataModel? _medicationData;
+  // LabScreeningDataModel? _labscreeningData;
+  // ConditionsDataModel? _conditionsData;
 
   @override
   Widget build(BuildContext context) {
@@ -60,38 +60,38 @@ class _AccountScreenState extends State<AccountScreen> {
           }
         },
       ),
-      BlocListener<medicalaid.MedicalAidCubit, medicalaid.AccountState>(
-        listener: (context, state) {
-          if (state is medicalaid.AccountSuccess) {
-            // handle medical aid data here
-            _medicalAidData = state.medicalAidDataModel;
-          }
-        },
-      ),
-      BlocListener<medication.MedicationCubit, medication.AccountState>(
-        listener: (context, state) {
-          if (state is medication.AccountSuccess) {
-            // handle medical aid data here
-            _medicationData = state.medicationDataModel;
-          }
-        },
-      ),
-      BlocListener<labscreening.LabScreeningCubit, labscreening.AccountState>(
-        listener: (context, state) {
-          if (state is labscreening.AccountSuccess) {
-            // handle medical aid data here
-            _labscreeningData = state.labDataModel;
-          }
-        },
-      ),
-      BlocListener<conditions.ConditionsCubit, conditions.AccountState>(
-        listener: (context, state) {
-          if (state is conditions.AccountSuccess) {
-            // handle medical aid data here
-            _conditionsData = state.conditionsDataModel;
-          }
-        },
-      ),
+      // BlocListener<medicalaid.MedicalAidCubit, medicalaid.AccountState>(
+      //   listener: (context, state) {
+      //     if (state is medicalaid.AccountSuccess) {
+      //       // handle medical aid data here
+      //       _medicalAidData = state.medicalAidDataModel;
+      //     }
+      //   },
+      // ),
+      // BlocListener<medication.MedicationCubit, medication.AccountState>(
+      //   listener: (context, state) {
+      //     if (state is medication.AccountSuccess) {
+      //       // handle medical aid data here
+      //       _medicationData = state.medicationDataModel;
+      //     }
+      //   },
+      // ),
+      // BlocListener<labscreening.LabScreeningCubit, labscreening.AccountState>(
+      //   listener: (context, state) {
+      //     if (state is labscreening.AccountSuccess) {
+      //       // handle medical aid data here
+      //       _labscreeningData = state.labDataModel;
+      //     }
+      //   },
+      // ),
+      // BlocListener<conditions.ConditionsCubit, conditions.AccountState>(
+      //   listener: (context, state) {
+      //     if (state is conditions.AccountSuccess) {
+      //       // handle medical aid data here
+      //       _conditionsData = state.conditionsDataModel;
+      //     }
+      //   },
+      // ),
     ],
     child: BlocBuilder<account.AccountCubit, account.AccountState>(
       builder: (context, state) {
@@ -124,34 +124,34 @@ class _AccountScreenState extends State<AccountScreen> {
                         Navigator.pushNamed(context, RouteManager.editProfile),
                   ),
                   divider,
-                  BuildProfileCard(
-                    title: "Medical Aid",
-                    image: ImageManager.termsIcon,
-                    onPressed: () =>
-                        Navigator.pushNamed(context, RouteManager.editMedicalAid),
-                  ),
-                  divider,
-                  BuildProfileCard(
-                    title: "Medication",
-                    image: ImageManager.termsIcon,
-                    onPressed: () =>
-                        Navigator.pushNamed(context, RouteManager.viewMedication),
-                  ),
-                  divider,
-                  BuildProfileCard(
-                    title: "Lab Screening",
-                    image: ImageManager.termsIcon,
-                    onPressed: () =>
-                        Navigator.pushNamed(context, RouteManager.viewLabScreening),
-                  ),
-                  divider,
-                  BuildProfileCard(
-                    title: "Conditions",
-                    image: ImageManager.termsIcon,
-                    onPressed: () =>
-                        Navigator.pushNamed(context, RouteManager.viewConditions),
-                  ),
-                  divider,
+                  // BuildProfileCard(
+                  //   title: "Medical Aid",
+                  //   image: ImageManager.termsIcon,
+                  //   onPressed: () =>
+                  //       Navigator.pushNamed(context, RouteManager.editMedicalAid),
+                  // ),
+                  // divider,
+                  // BuildProfileCard(
+                  //   title: "Medication",
+                  //   image: ImageManager.termsIcon,
+                  //   onPressed: () =>
+                  //       Navigator.pushNamed(context, RouteManager.viewMedication),
+                  // ),
+                  // divider,
+                  // BuildProfileCard(
+                  //   title: "Lab Screening",
+                  //   image: ImageManager.termsIcon,
+                  //   onPressed: () =>
+                  //       Navigator.pushNamed(context, RouteManager.viewLabScreening),
+                  // ),
+                  // divider,
+                  // BuildProfileCard(
+                  //   title: "Conditions",
+                  //   image: ImageManager.termsIcon,
+                  //   onPressed: () =>
+                  //       Navigator.pushNamed(context, RouteManager.viewConditions),
+                  // ),
+                  // divider,
                   BuildProfileCard(
                     title: "Dark Mode",
                     image: ImageManager.darkModeIcon,
