@@ -1,3 +1,5 @@
+import 'package:touchhealth/view/screen/user_address/user_address_screen.dart';
+
 import '../../view/screen/account/about_us/app_feedback_screen.dart';
 import '../../view/screen/account/about_us/app_updates_screen.dart';
 import '../../view/screen/account/about_us/social_media_screen.dart';
@@ -105,9 +107,9 @@ class AppRouter {
         return PageTransitionManager.materialSlideTransition(
           const CreateMedicalAid(),
         );
-      case RouteManager.viewConditions:
+      case RouteManager.viewUserAddress:
         return PageTransitionManager.materialSlideTransition(
-          const ViewConditions(),
+          const UserAddress(),
       );
       case RouteManager.viewLabScreening:
         return PageTransitionManager.materialSlideTransition(

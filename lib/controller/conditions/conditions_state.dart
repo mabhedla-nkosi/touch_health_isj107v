@@ -20,7 +20,7 @@ class ProfileUpdateFailure extends AccountState {
 class AccountLoading extends AccountState {}
 
 class AccountSuccess extends AccountState {
-  final ConditionsDataModel conditionsDataModel;
+  final Condition conditionsDataModel;
 
   AccountSuccess({required this.conditionsDataModel});
 }

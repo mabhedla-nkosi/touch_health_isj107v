@@ -1,7 +1,7 @@
 import 'dart:io';
 
+import 'package:touchhealth/controller/user_address/user_address_cubit.dart';
 import 'package:touchhealth/core/utils/helper/scaffold_snakbar.dart';
-import 'package:touchhealth/controller/medical_aid/medical_aid_cubit.dart';
 import 'package:touchhealth/controller/validation/formvalidation_cubit.dart';
 import 'package:touchhealth/view/widget/button_loading_indicator.dart';
 import 'package:flutter/material.dart';
@@ -21,24 +21,27 @@ import '../../../core/utils/theme/color.dart';
 import '../../widget/custom_scrollable_appbar.dart';
 import '../../../core/cache/cache.dart';
 
-class CreateMedicalAid extends StatefulWidget {
-  const CreateMedicalAid({super.key});
+class UserAddress extends StatefulWidget {
+  const UserAddress({super.key});
 
   @override
-  State<CreateMedicalAid> createState() => _CreateMedicalAidState();
+  State<UserAddress> createState() => _UserAddressState();
 }
 
-class _CreateMedicalAidState extends State<CreateMedicalAid> {
+class _UserAddressState extends State<UserAddress> {
 
-  Map<String, dynamic> patientMedicalAid = {};
+  Map<String, dynamic> userAddress = {};
 
   @override
   void initState() {
     super.initState();
-    _loadMedicalAidData();
+    _loadUserAddressData();
   }
 
-  final TextEditingController _medicalAidNumberController = TextEditingController();
+  final TextEditingController _postalAddressController = TextEditingController();
+  final TextEditingController _postalAddressCodeController = TextEditingController();
+  final TextEditingController _physicalAddressController = TextEditingController();
+  final TextEditingController _physicalAddressCodeController = TextEditingController();
 
   @override
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -49,33 +52,15 @@ class _CreateMedicalAidState extends State<CreateMedicalAid> {
   String? _patientId;
   String? _medicalAidId; 
 
-  List<Item> medicalAidList = const [
-  Item("Discovery Health"),
-  Item("Bonitas"),
-  Item("Momentum Health"),
-  Item("Bestmed"),
-  Item("Fedhealth"),
-  Item("Medihelp"),
-  Item("Profmed"),
-  Item("Bankmed"),
-  Item("KeyHealth"),
-  Item("Resolution Health"),
-  Item("Sizwe"),
-  Item("CompCare"),
-  Item("Thebemed"),
-  Item("Hosmed"),
-  Item("Samwumed"),
-  Item("Polmed"),
-  Item("GEMS (Government Employees Medical Scheme)"),
-  Item("LMPS (Liberty Medical Plan)"),
-];
-
-Future<void> _loadMedicalAidData() async {
-    final data = await CacheData.getMapData(key: "medicalAidData");
+Future<void> _loadUserAddressData() async {
+    final data = await CacheData.getMapData(key: "userAddressData");
     if (data != null) {
       setState(() {
-        patientMedicalAid = data['medicalAidData'] ?? {};
-        _medicalAidNumberController.text = patientMedicalAid['medicalnumber'] ?? '';
+        userAddress= data['userAddressData'] ?? {};
+        _postalAddressController.text = userAddress['postaladdress'] ?? '';
+        _postalAddressCodeController.text = userAddress['postalcode'] ?? '';
+        _physicalAddressController.text = userAddress['physicaladdress'] ?? '';
+        _physicalAddressCodeController.text = userAddress['physicalcode'] ?? '';
       });
     }
   }
@@ -108,7 +93,7 @@ Future<void> _loadMedicalAidData() async {
   @override
   Widget build(BuildContext context) {
     //print("Medical Aid Data in Create Medical Aid: $_userData");
-    return BlocConsumer<MedicalAidCubit, MedicalAidSearchState>(
+    return BlocConsumer<UserAddressCubit, UserAddressSearchState>(
     listener: (context, state) {
       // if (state is ProfileUpdateLoading) {
       //   _isLoading = true;
@@ -119,9 +104,9 @@ Future<void> _loadMedicalAidData() async {
       //   _isLoading = false;
       //   customSnackBar(context, state.message, ColorManager.error);
       // }
-      if (state is MedicalAidSearchSuccess) {
+      if (state is UserAddressSearchSuccess) {
       // update local data
-        _loadMedicalAidData();
+        _loadUserAddressData();
       }
     },
     builder: (context, state) {
@@ -133,9 +118,9 @@ Future<void> _loadMedicalAidData() async {
               child: Column(
                 children: [
                   Gap(32.h),
-                  const CustomTitleBackButton(title: "Create Medical Aid"),
+                  const CustomTitleBackButton(title: "User Address"),
                    Gap(20.h),
-                  _buildMedicalAidDataFields(context, patientMedicalAid),
+                  _buildUserAddressDataFields(context, userAddress),
                   Gap(28.h),
                   CustomButton(
                     widget: _isLoading ? const ButtonLoadingIndicator() : null,
@@ -161,32 +146,52 @@ Future<void> _loadMedicalAidData() async {
   
   }
 
-  Widget _buildMedicalAidDataFields(
+  Widget _buildUserAddressDataFields(
     BuildContext context, Map<String, dynamic> userData) {
     final cubit = context.bloc<ValidationCubit>();
     return Form(
       key: _formKey,
       child: Column(
         children: [
-          CustomDropDownField(
-            hintText: "Enter your Medical Aid Name",
-            title: "Medical Aid Name",
-            items: medicalAidList,
+          CustomTextFormField(
+            controller: _postalAddressController,
+            //keyboardType: TextInputType.text,
+            title: "Postal Address",
+            hintText: "Enter your Postal Address",
+            keyboardType: TextInputType.multiline,
+            maxLines: null,
             onSaved: (data) {
-              _medicalAidName = data!.name.toString();
+              _medicalAidNumber = data;
             },
-            value: userData['medicalaidname'] != null
-              ? medicalAidList.firstWhere(
-                  (c) => c.name == userData['medicalaidname'],
-                  orElse: () => medicalAidList.first, // fallback
-                )
-              : null,
+            validator: cubit.normalValueValidator,
           ),
           CustomTextFormField(
-            controller: _medicalAidNumberController,
+            controller: _postalAddressCodeController,
             keyboardType: TextInputType.text,
-            title: "Medical Aid Number",
-            hintText: "Enter your Medical Aid Number",
+            title: "Postal Address Code",
+            hintText: "Enter your Postal Address Code",
+            onSaved: (data) {
+              _medicalAidNumber = data;
+            },
+            validator: cubit.normalValueValidator,
+          ),
+          CustomTextFormField(
+            controller: _physicalAddressController,
+            //keyboardType: TextInputType.text,
+            title: "Physical Address",
+            hintText: "Enter your Physical Address Code",
+            keyboardType: TextInputType.multiline,
+            maxLines: null,
+            onSaved: (data) {
+              _medicalAidNumber = data;
+            },
+            validator: cubit.normalValueValidator,
+          ),
+          CustomTextFormField(
+            controller: _postalAddressController,
+            keyboardType: TextInputType.text,
+            title: "Physical Address Code",
+            hintText: "Enter your Physical Address Code",
             onSaved: (data) {
               _medicalAidNumber = data;
             },
