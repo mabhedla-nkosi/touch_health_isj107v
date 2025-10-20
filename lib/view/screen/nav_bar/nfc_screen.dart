@@ -8,6 +8,7 @@ import 'package:touchhealth/data/model/conditions_model.dart';
 import 'package:touchhealth/data/model/labscreening_model.dart';
 import 'package:touchhealth/data/model/medical_aid_model.dart';
 import 'package:touchhealth/data/model/medication_model.dart';
+import 'package:touchhealth/data/model/user_address_model.dart';
 import 'package:touchhealth/data/model/user_data_model.dart';
 import 'package:touchhealth/view/screen/account/edit_user_card_buttom_sheet.dart';
 import 'package:touchhealth/view/widget/build_profile_card.dart';
@@ -39,9 +40,9 @@ import '../../widget/custom_tooltip.dart';
 import 'package:touchhealth/controller/medical_aid/medical_aid_cubit.dart' as medicalaid;
 import 'package:touchhealth/controller/medication/medication_cubit.dart' as medication;
 import 'package:touchhealth/controller/labscreening/labscreening_cubit.dart' as labscreening;
-import 'package:touchhealth/controller/conditions/conditions_cubit.dart' as conditions;
 import 'package:touchhealth/controller/account/account_cubit.dart' as account;
 import 'package:touchhealth/controller/practitioner/patient_search_cubit.dart' as patientCubit;
+import 'package:touchhealth/controller/user_address/user_address_cubit.dart' as useraddress;
 
 class NFCScreen extends StatefulWidget {
   final String? id;
@@ -71,8 +72,8 @@ class _NFCScreenState extends State<NFCScreen> {
   void initState() {
     super.initState();
     context.bloc<account.AccountCubit>().getprofileData();
-    context.bloc<medicalaid.MedicalAidCubit>().getMedicalAidData();
-    context.bloc<conditions.ConditionsCubit>().getConditionsData();
+    //context.bloc<medicalaid.MedicalAidCubit>().searchMedicalAidByUserId();
+    //context.bloc<conditions.ConditionsCubit>().getConditionsData();
     context.bloc<labscreening.LabScreeningCubit>().getLabScreeningData();
     context.bloc<medication.MedicationCubit>().getMedicationData();
     _cubit = MedicalRecordCubit();
@@ -922,10 +923,12 @@ class _NFCScreenState extends State<NFCScreen> {
 
   UserDataModel? _userData;
   MedicalAidDataModel? _medicalAidData;
-  MedicationDataModel? _medicationData;
+  Medication? _medicationData;
   LabScreeningDataModel? _labscreeningData;
-  ConditionsDataModel? _conditionsData;
+  Condition? _conditionsData;
+  late Map<String, dynamic> _userAddress = {};
   late Map<String, dynamic> patient= {};
+  late Map<String, dynamic> patientMedicalAid= {};
 
   @override
   Widget build(BuildContext context) {
@@ -942,24 +945,26 @@ class _NFCScreenState extends State<NFCScreen> {
             context.read<patientCubit.PatientSearchCubit>()
               .searchPatientsByEmail(fullEmail.toString());
 
-              // context.read<patientCubit.PatientSearchCubit>()
-              // .searchPatientsByName('Demo');
+            
+
           }
         },
       ),
-      BlocListener<medicalaid.MedicalAidCubit, medicalaid.AccountState>(
+      BlocListener<medicalaid.MedicalAidCubit, medicalaid.MedicalAidSearchState>(
         listener: (context, state) {
-          if (state is medicalaid.AccountSuccess) {
+          if (state is medicalaid.MedicalAidSearchSuccess) {
             // handle medical aid data here
-            _medicalAidData = state.medicalAidDataModel;
+
+            //_medicalAidData = state.medicalAidDataModel;
+            patientMedicalAid = state.MedicalAids.first;
           }
         },
       ),
-      BlocListener<medication.MedicationCubit, medication.AccountState>(
+      BlocListener<useraddress.UserAddressCubit, useraddress.UserAddressSearchState>(
         listener: (context, state) {
-          if (state is medication.AccountSuccess) {
+          if (state is useraddress.UserAddressSearchSuccess) {
             // handle medical aid data here
-            _medicationData = state.medicationDataModel;
+            _userAddress = state.UserAddress.first;
           }
         },
       ),
@@ -971,18 +976,25 @@ class _NFCScreenState extends State<NFCScreen> {
           }
         },
       ),
-      BlocListener<conditions.ConditionsCubit, conditions.AccountState>(
-        listener: (context, state) {
-          if (state is conditions.AccountSuccess) {
-            // handle medical aid data here
-            _conditionsData = state.conditionsDataModel;
-          }
-        },
-      ),
+      // BlocListener<conditions.ConditionsCubit, conditions.AccountState>(
+      //   listener: (context, state) {
+      //     if (state is conditions.AccountSuccess) {
+      //       // handle medical aid data here
+      //       _conditionsData = state.conditionsDataModel;
+      //     }
+      //   },
+      // ),
       BlocListener<patientCubit.PatientSearchCubit, patientCubit.PatientSearchState>(
         listener: (context, state) {
           if (state is patientCubit.PatientSearchSuccess) {
             patient = state.patients.first;
+
+            final int userId = patient['userid'];
+            context.read<medicalaid.MedicalAidCubit>()
+              .searchMedicalAidByUserId(userId);
+
+            context.read<useraddress.UserAddressCubit>()
+            .searchUserAddressByUserId(userId);
 
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Patient data loaded successfully")),
@@ -1006,13 +1018,13 @@ class _NFCScreenState extends State<NFCScreen> {
               padding: EdgeInsets.symmetric(horizontal: 18, vertical: 18.h),
               child: Column(
                 children: [
-                  Gap(15.h),
-                  // TouchHealth Logo
-                  SvgPicture.asset(
-                    ImageManager.splashLogo,
-                    height: 80.h,
-                    width: 80.w,
-                  ),
+                  // Gap(15.h),
+                  // // TouchHealth Logo
+                  // SvgPicture.asset(
+                  //   ImageManager.splashLogo,
+                  //   height: 80.h,
+                  //   width: 80.w,
+                  // ),
                   Gap(20.h),
                   _buildUserCard(
                     context,
@@ -1028,37 +1040,31 @@ class _NFCScreenState extends State<NFCScreen> {
                         Navigator.pushNamed(context, RouteManager.editMedicalAid),
                   ),
                   divider,
+                  // BuildProfileCard(
+                  //   title: "Medication",
+                  //   image: ImageManager.termsIcon,
+                  //   onPressed: () =>
+                  //       Navigator.pushNamed(context, RouteManager.viewMedication),
+                  // ),
+                  // divider,
+                  // BuildProfileCard(
+                  //   title: "Lab Screening",
+                  //   image: ImageManager.termsIcon,
+                  //   onPressed: () =>
+                  //       Navigator.pushNamed(context, RouteManager.viewLabScreening),
+                  // ),
+                  // divider,
                   BuildProfileCard(
-                    title: "Medication",
-                    image: ImageManager.termsIcon,
+                    title: "User Address",
+                    image: ImageManager.updateIcon,
                     onPressed: () =>
-                        Navigator.pushNamed(context, RouteManager.viewMedication),
-                  ),
-                  divider,
-                  BuildProfileCard(
-                    title: "Lab Screening",
-                    image: ImageManager.termsIcon,
-                    onPressed: () =>
-                        Navigator.pushNamed(context, RouteManager.viewLabScreening),
-                  ),
-                  divider,
-                  BuildProfileCard(
-                    title: "Conditions",
-                    image: ImageManager.termsIcon,
-                    onPressed: () =>
-                        Navigator.pushNamed(context, RouteManager.viewConditions),
+                        Navigator.pushNamed(context, RouteManager.viewUserAddress),
                   ),
                   divider,
                   BuildProfileCard(
                     title: "Medical Record",
                     image: ImageManager.termsIcon,
                     onPressed: () =>
-                        //Navigator.pushNamed(context, RouteManager.editMedicalAid),
-                        // Navigator.pushNamed(
-                        //   context,
-                        //   RouteManager.patientDetails,
-                        //   arguments: patient,
-                        // ),
                         {
                           if (patient.isNotEmpty) {
                             Navigator.pushNamed(

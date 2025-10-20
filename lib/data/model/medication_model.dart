@@ -1,24 +1,35 @@
-class MedicationDataModel {
-  String? dosage;
-  String? userId;
+class Medication {
+  int? medicationid;
+  int? userid;
   String? medicationname;
+  String? dosage;
+  String? frequency;
 
-  MedicationDataModel({
-    this.dosage,
-    this.userId,
+  Medication({
+    this.medicationid,
+    this.userid,
     this.medicationname,
+    this.dosage,
+    this.frequency,
   });
 
-  MedicationDataModel.fromJson(Map<String, dynamic> json)
-      : dosage = json['dosage'] ?? '',
-      userId = json['userId'] ?? '',
-      medicationname = json['medicationname'] ?? '';
+  factory Medication.fromJson(Map<String, dynamic> json) {
+    return Medication(
+      medicationid: json['medicationid'],
+      userid: json['userid'],
+      medicationname: json['medicationname'],
+      dosage: json['dosage'],
+      frequency: json['frequency'],
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
-      'dosage': dosage,
-      'userId': userId,
-      'medicationname': medicationname,
+      "medicationid": medicationid,
+      "userid": userid,
+      "medicationname": medicationname,
+      "dosage": dosage,
+      "frequency": frequency,
     };
   }
 }

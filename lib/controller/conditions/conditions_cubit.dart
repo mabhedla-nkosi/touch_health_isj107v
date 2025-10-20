@@ -20,9 +20,9 @@ class ConditionsCubit extends Cubit<AccountState> {
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
         // Create demo user data for unauthenticated users
-        final demoUserData = ConditionsDataModel(
+        final demoUserData = Condition(
           //name: 'Demo',
-          userId: 'demo_user',
+          userid: 1,
           conditionname: 'User',
           diagnosisdate: '20/09/2025',
         );
@@ -33,7 +33,7 @@ class ConditionsCubit extends Cubit<AccountState> {
         return;
       }
       
-      ConditionsDataModel? conditionsDataModel;
+      Condition? conditionsDataModel;
       final doc = await _firestore
           .collection('conditions')
           .doc(currentUser.uid)
@@ -65,7 +65,7 @@ class ConditionsCubit extends Cubit<AccountState> {
       //   }
       // });
       if (doc.exists && doc.data() != null) {
-          conditionsDataModel = ConditionsDataModel.fromJson(doc.data()!);
+          conditionsDataModel = Condition.fromJson(doc.data()!);
 
           await CacheData.setMapData(
             key: "conditionsData",
@@ -75,8 +75,8 @@ class ConditionsCubit extends Cubit<AccountState> {
           emit(AccountSuccess(conditionsDataModel: conditionsDataModel));
         } else {
           // Create fallback user data if document doesn't exist
-          final fallbackUserData = ConditionsDataModel(
-            userId: currentUser.uid,
+          final fallbackUserData = Condition(
+            userid: int.tryParse(currentUser.uid) ,
             conditionname: 'User',
           diagnosisdate: '02/09/2025',
           );

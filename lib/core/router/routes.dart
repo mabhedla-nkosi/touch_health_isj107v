@@ -15,6 +15,7 @@ class RouteManager {
   static const editMedicalAid = "/editMedicalAid";
   static const viewMedication = "/viewMedication";
   static const viewConditions = "/viewConditions";
+  static const viewUserAddress = "/viewUserAddress";
   static const viewLabScreening = "/viewLabScreening";
   static const maps = "/maps";
   static const oldPassword = "/oldPassword";

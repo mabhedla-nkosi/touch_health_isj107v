@@ -5,6 +5,7 @@ import 'package:touchhealth/controller/medication/medication_cubit.dart';
 import 'package:touchhealth/controller/permissions/permissions_cubit.dart';
 import 'package:touchhealth/controller/chat/chat_cubit.dart';
 import 'package:touchhealth/controller/practitioner/patient_search_cubit.dart';
+import 'package:touchhealth/controller/user_address/user_address_cubit.dart';
 import 'package:touchhealth/controller/validation/formvalidation_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter/material.dart';
@@ -41,7 +42,7 @@ class MyApp extends StatelessWidget {
           create: (_) => MedicalAidCubit(),
         ),
         BlocProvider(
-          create: (_) => ConditionsCubit(),
+          create: (_) => UserAddressCubit(),
         ),
         BlocProvider(
           create: (_) => LabScreeningCubit(),

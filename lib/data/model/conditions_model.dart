@@ -1,24 +1,31 @@
-class ConditionsDataModel {
+class Condition {
+  int? conditionid;
   String? conditionname;
   String? diagnosisdate;
-  String? userId;
+  int? userid;
 
-  ConditionsDataModel({
+  Condition({
+    this.conditionid,
     this.conditionname,
-    this.userId,
     this.diagnosisdate,
+    this.userid
   });
 
-  ConditionsDataModel.fromJson(Map<String, dynamic> json)
-      : conditionname = json['conditionname'] ?? '',
-      userId = json['userId'] ?? '',
-      diagnosisdate = json['diagnosisdate'] ?? '';
+  factory Condition.fromJson(Map<String, dynamic> json) {
+    return Condition(
+      conditionid: json['conditionid'],
+      conditionname: json['conditionname'],
+      diagnosisdate: json['diagnosisdate'],
+      userid: json['userid'],
+    );
+  }
 
   Map<String, dynamic> toJson() {
     return {
+      'conditionid': conditionid,
       'conditionname': conditionname,
-      'userId': userId,
       'diagnosisdate': diagnosisdate,
+      'userid': userid
     };
   }
 }

@@ -20,7 +20,7 @@ class ProfileUpdateFailure extends AccountState {
 class AccountLoading extends AccountState {}
 
 class AccountSuccess extends AccountState {
-  final MedicationDataModel medicationDataModel;
+  final Medication medicationDataModel;
 
   AccountSuccess({required this.medicationDataModel});
 }

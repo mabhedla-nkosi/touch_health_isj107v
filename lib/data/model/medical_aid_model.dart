@@ -1,28 +1,33 @@
+import 'dart:convert';
+
 class MedicalAidDataModel {
   String? medicalaidname;
-  String? medicaliadid;
-  String? medicalaidnumber;
-  String? userId;
+  int? medicalaidid;
+  String? medicalnumber;
+  int? userid;
 
   MedicalAidDataModel({
     this.medicalaidname,
-    this.userId,
-    this.medicalaidnumber,
-    this.medicaliadid,
+    this.userid,
+    this.medicalnumber,
+    this.medicalaidid,
   });
 
   MedicalAidDataModel.fromJson(Map<String, dynamic> json)
       : medicalaidname = json['medicalaidname'] ?? '',
-      userId = json['userId'] ?? '',
-      medicalaidnumber = json['medicalaidnumber'] ?? '',
-      medicaliadid = json['medicaliadid'] ?? '';
+      userid = json['userid'] ?? 0,
+      medicalnumber = json['medicalnumber'] ?? '',
+      medicalaidid = json['medicalaidid'] ?? 0;
 
   Map<String, dynamic> toJson() {
     return {
       'medicalaidname': medicalaidname,
-      'userId': userId,
-      'medicalaidnumber': medicalaidnumber,
-      'medicaliadid': medicaliadid,
+      'userid': userid,
+      'medicalnumber': medicalnumber,
+      'medicalaidid': medicalaidid,
     };
   }
+
+  @override
+  String toString() => jsonEncode(toJson());
 }

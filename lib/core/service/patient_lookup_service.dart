@@ -3,9 +3,11 @@ import 'dart:developer' as dev;
 import 'dart:math';
 import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:touchhealth/core/cache/cache.dart';
 import 'package:touchhealth/core/service/consent_service.dart';
 import 'package:touchhealth/core/service/blockchain_ledger_service.dart';
 import 'package:touchhealth/core/service/new_patient_data_service.dart';
+import 'package:touchhealth/data/model/patient_data_model.dart';
 
 class PatientLookupService {
   //static const String baseUrl = 'https://jsonplaceholder.typicode.com/users';
@@ -27,10 +29,12 @@ class PatientLookupService {
       
       // Add demo patients if they match
       //final demoPatients = _getAllDemoPatients();
-      List<PatientData> actualData =await dataService.getPatientData();
+      //List<PatientData> actualData =await dataService.getPatientData();
 
       // Convert medical number to valid user ID for API call
       int userId = _convertMedicalNumberToUserId(medicalNumber);
+
+      List<PatientData> actualData =await dataService.getPatientDataById(userId);
       
       // final response = await http.get(
       //   Uri.parse('$baseUrl/$userId'),
@@ -49,6 +53,22 @@ class PatientLookupService {
         for (var patient in actualData) {
           if ((patient.userid == userId)) {
             patientMap = patient.toJson();
+            await CacheData.setMapData(
+                key: "appointmentData",
+                value: {'appointments': patientMap['appointments']}, // wrap in a map if needed
+              );
+            await CacheData.setMapData(
+                key: "vitalsData",
+                value: {'vitals': patientMap['vitals']}, // wrap in a map if needed
+              );
+            await CacheData.setMapData(
+                key: "medicationData",
+                value: {'medication': patientMap['medication']}, // wrap in a map if needed
+              );
+            await CacheData.setMapData(
+                key: "conditionsData",
+                value: {'conditions': patientMap['conditions']}, // wrap in a map if needed
+              );
             patientMap["medicalNumber"] = "MED${patient.userid}";
             return _generatePatientFromUserData(medicalNumber, patientMap);
           }
@@ -79,77 +99,38 @@ class PatientLookupService {
       final patient = await findPatientByMedicalNumber(medicalNumber);
       if (patient == null) return null;
 
-      // Generate comprehensive medical record with new entries
-      final random = Random();
+      final appointmentData = CacheData.getMapData(key: "appointmentData");
+      final visitSummary = generateVisitSummary(appointmentData['appointments']);
+      final visitNextSummary = generateNextVisitSummary(appointmentData['appointments']);
+
+      final vitalsData = CacheData.getMapData(key: "vitalsData");
+      final vitalsSummary = generateVitalsSummary(vitalsData['vitals']);
+
+      final medicationData = CacheData.getMapData(key: "medicationData");
       
       // Get existing medications and merge with new entries
-      final baseMedications = _generateMedications(random);
-      final newMedicationsMemory = _getPatientEntries(medicalNumber, 'medication');
-      final newMedicationsFs = await _fetchFirestoreEntries(medicalNumber, 'medications');
-      final allMedications = [...baseMedications, ...newMedicationsMemory, ...newMedicationsFs];
+      final baseMedications = generateMedicationSummary(medicationData['medication']);
 
-      // Get new entries for other types
-      final newVitalsMemory = _getPatientEntries(medicalNumber, 'vital');
-      final newHistoryMemory = _getPatientEntries(medicalNumber, 'history');
-      final newAppointmentsMemory = _getPatientEntries(medicalNumber, 'appointment');
+      final conditionsData = CacheData.getMapData(key: "conditionsData");
 
-      final newVitalsFs = await _fetchFirestoreEntries(medicalNumber, 'vitals');
-      final newHistoryFs = await _fetchFirestoreEntries(medicalNumber, 'history');
-      final newAppointmentsFs = await _fetchFirestoreEntries(medicalNumber, 'appointments');
+      final allMedications = baseMedications;
 
-      // Base vitals with new entries appended
-      final baseVitals = {
-        'bloodPressure': {
-          'systolic': 120 + random.nextInt(40),
-          'diastolic': 70 + random.nextInt(20),
-          'unit': 'mmHg',
-          'timestamp': DateTime.now().subtract(Duration(hours: random.nextInt(24))).toIso8601String(),
-        },
-        'heartRate': {
-          'value': 60 + random.nextInt(40),
-          'unit': 'bpm',
-          'timestamp': DateTime.now().subtract(Duration(hours: random.nextInt(24))).toIso8601String(),
-        },
-        'temperature': {
-          'value': 36.0 + random.nextDouble() * 2,
-          'unit': '°C',
-          'timestamp': DateTime.now().subtract(Duration(hours: random.nextInt(24))).toIso8601String(),
-        },
-      };
-
-      // Add new vitals to base vitals
-      for (var vital in [...newVitalsMemory, ...newVitalsFs]) {
-        baseVitals[vital['type']?.toLowerCase().replaceAll(' ', '') ?? 'custom'] = {
-          'value': vital['value'],
-          'unit': vital['unit'],
-          'timestamp': vital['timestamp'],
-          'notes': vital['notes'],
-          'addedBy': vital['addedBy'],
-        };
-      }
+      final baseVitals = vitalsSummary;
       
       return {
         'patient': patient,
         'vitals': baseVitals,
         'medicalHistory': {
-          'allergies': _generateAllergies(random),
-          'chronicConditions': _generateChronicConditions(random),
-          'familyHistory': _generateFamilyHistory(random),
-          'newEntries': [...newHistoryMemory, ...newHistoryFs], // Add new history entries
+          //'allergies': _generateAllergies(random),
+          'chronicConditions': generateChronicConditions(conditionsData['conditions']),
+          //'familyHistory': _generateFamilyHistory(random),
         },
         'medications': allMedications,
         'appointments': {
-          'last': {
-            'date': DateTime.now().subtract(Duration(days: random.nextInt(30) + 1)).toIso8601String(),
-            'doctor': 'Dr. ${['Smith', 'Johnson', 'Williams', 'Brown'][random.nextInt(4)]}',
-            'type': 'Regular Checkup',
-          },
-          'next': {
-            'date': DateTime.now().add(Duration(days: random.nextInt(30) + 1)).toIso8601String(),
-            'doctor': 'Dr. ${['Smith', 'Johnson', 'Williams', 'Brown'][random.nextInt(4)]}',
-            'type': 'Follow-up',
-          },
-          'newAppointments': [...newAppointmentsMemory, ...newAppointmentsFs], // Add new appointment entries
+          'last': 
+            visitSummary
+          ,
+          'next': visitNextSummary,
         },
         'lastUpdated': DateTime.now().toIso8601String(),
       };
@@ -157,6 +138,124 @@ class PatientLookupService {
       dev.log('Error fetching medical record: $e');
       return null;
     }
+  }
+
+  static List<Map<String, dynamic>> generateMedicationSummary(List<dynamic> medicationData) {
+    if (medicationData.isEmpty) {
+      // No medications — return an empty list
+      return [];
+    }
+
+    // Build a simplified structure
+    return medicationData.map((m) {
+      return {
+        'name': m['medicationname'] ?? 'Unknown',
+        'dosage': m['dosage'] ?? 'N/A',
+        'frequency': m['frequency'] ?? 'Unspecified',
+      };
+    }).toList();
+  }
+
+
+  static Map<String, dynamic> generateVisitSummary(List<dynamic> appointments) {
+    // Take the first appointment (latest)
+    final lastAppointment = appointments.first;
+
+    return {
+      'date': lastAppointment['date'],
+      'doctor': 'Dr ${lastAppointment['practitioner_name']} ${lastAppointment['practitioner_surname']}',
+      'type': lastAppointment['notes'],
+    };
+  }
+
+  static List<String> generateChronicConditions(List<dynamic> conditions) {
+    if (conditions.isEmpty) return [];
+
+    // Extract only the condition names and remove null/empty ones
+    final conditionNames = conditions
+      .map((c) => (c['conditionname'] ?? '').toString().trim())
+      .where((name) => name.isNotEmpty)
+      .toList();
+
+    return List<String>.from(conditionNames);
+  }
+
+
+  static Map<String, dynamic>? generateNextVisitSummary(List<dynamic> appointments) {
+    if (appointments.isEmpty) return null;
+
+    final now = DateTime.now();
+
+    // Filter appointments to only those in the future
+    final futureAppointments = appointments.where((a) {
+      if (a['date'] == null) return false;
+      final date = DateTime.tryParse(a['date']);
+      return date != null && date.isAfter(now);
+    }).toList();
+
+    if (futureAppointments.isEmpty) return null;
+
+    // Sort by ascending date to get the soonest upcoming appointment
+    futureAppointments.sort((a, b) {
+      final dateA = DateTime.parse(a['date']);
+      final dateB = DateTime.parse(b['date']);
+      return dateA.compareTo(dateB);
+    });
+
+    final nextAppointment = futureAppointments.first;
+
+    return {
+      'date': nextAppointment['date'],
+      'doctor':
+          'Dr ${nextAppointment['practitioner_name']} ${nextAppointment['practitioner_surname']}',
+      'type': nextAppointment['notes'],
+    };
+  }
+
+
+  static Map<String, dynamic> generateVitalsSummary(List<dynamic> vitalsData) {
+    if (vitalsData.isEmpty) {
+      // No vitals available — return zeros or nulls
+      return {
+        'bloodPressure': {
+          'systolic': 0,
+          'diastolic': 0,
+          'unit': 'mmHg',
+          'timestamp': null,
+        },
+        'heartRate': {
+          'value': 0,
+          'unit': 'bpm',
+          'timestamp': null,
+        },
+        'temperature': {
+          'value': 0.0,
+          'unit': '°C',
+          'timestamp': null,
+        },
+      };
+    }
+
+    final latest = vitalsData.first;
+
+    return {
+      'bloodPressure': {
+        'systolic': latest['systolic'] ?? 0,
+        'diastolic': latest['diastolic'] ?? 0,
+        'unit': 'mmHg',
+        'timestamp': latest['vitalsdate'],
+      },
+      'heartRate': {
+        'value': latest['heartrate'] ?? 0,
+        'unit': 'bpm',
+        'timestamp': latest['vitalsdate'],
+      },
+      'temperature': {
+        'value': latest['temperature'] ?? 0.0,
+        'unit': '°C',
+        'timestamp': latest['vitalsdate'],
+      },
+    };
   }
 
   /// Search patients by name (for practitioners)
@@ -168,7 +267,6 @@ class PatientLookupService {
       //final demoPatients = _getAllDemoPatients();
       List<PatientData> actualData =await dataService.getPatientData();
           
-
     if (searchQuery.trim().isEmpty) {
       // If no search query, return all patients
       results = actualData.map((patient) => patient.toJson()).toList();
@@ -181,36 +279,6 @@ class PatientLookupService {
         }
       }
     }
-      // for (var patient in actualData) {
-        
-      //   if (patient.name.toString().toLowerCase().contains(searchQuery.toLowerCase())) {
-      //     final medicalNumber = 'MED${patient.app_id.toString()}';
-      //     print(patient);
-      //     results.add(patient as Map<String, dynamic>);
-      //     //results.add(_generatePatientFromUserData(medicalNumber, patient as Map<String, dynamic>));
-      //   }
-      // }
-      
-      // Generate additional patients from API
-      // for (int i = 1; i <= 5; i++) {
-      //   try {
-      //     final response = await http.get(
-      //       Uri.parse('$baseUrl/$i'),
-      //       headers: {'Content-Type': 'application/json'},
-      //     ).timeout(timeoutDuration);
-
-      //     if (response.statusCode == 200) {
-      //       final userData = json.decode(response.body);
-      //       final medicalNumber = 'MED${i.toString().padLeft(6, '0')}';
-            
-      //       if (userData['name'].toString().toLowerCase().contains(searchQuery.toLowerCase())) {
-      //         results.add(_generatePatientFromUserData(medicalNumber, userData));
-      //       }
-      //     }
-      //   } catch (e) {
-      //     dev.log('Error fetching patient $i: $e');
-      //   }
-      // }
       
       return results;
     } catch (e) {
@@ -225,7 +293,6 @@ class PatientLookupService {
       List<Map<String, dynamic>> results = [];
       
       // Add demo patients if they match
-      //final demoPatients = _getAllDemoPatients();
       List<PatientData> actualData =await dataService.getPatientDataByEmail(searchQuery);
 
     if (searchQuery.trim().isEmpty) {
@@ -374,6 +441,16 @@ class PatientLookupService {
 
   static Map<String, dynamic> _generatePatientFromUserData(String medicalNumber, Map<String, dynamic> userData) {
     final random = Random(medicalNumber.hashCode);
+
+    final appointments = userData['appointments'] as List<dynamic>?;
+
+    String? lastVisit;
+
+    if (appointments != null && appointments.isNotEmpty) {
+      lastVisit = appointments.first['date'];
+    } else {
+      lastVisit = null;
+    }
     
     return {
       'medicalNumber': medicalNumber,
@@ -383,7 +460,7 @@ class PatientLookupService {
       'age': _getAge(userData['dob']),
       'gender': (userData['gender']?.toString().toLowerCase() == 'male') ? 'Male' : 'Female',
       'bloodType': _getRandomBloodType(random),
-      'lastVisit': DateTime.now().subtract(Duration(days: random.nextInt(90))).toIso8601String(),
+      'lastVisit': lastVisit,
       'status': 'Active',
     };
   }

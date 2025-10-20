@@ -47,8 +47,8 @@ class User {
 }
 
 class UserService {
-  //final String baseUrl = "http://10.0.2.2:5000";
-  final String baseUrl = "https://postgres-api-hrd8.onrender.com"; 
+  final String baseUrl = "http://10.0.2.2:5000";
+  //final String baseUrl = "https://postgres-api-hrd8.onrender.com"; 
   // for Android emulator
   // use http://localhost:5000 if on iOS simulator or web
 

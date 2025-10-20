@@ -21,9 +21,9 @@ class MedicationCubit extends Cubit<AccountState> {
       final currentUser = FirebaseAuth.instance.currentUser;
       if (currentUser == null) {
         // Create demo user data for unauthenticated users
-        final demoUserData = MedicationDataModel(
+        final demoUserData = Medication(
           //name: 'Demo',
-          userId: 'demo_user',
+          userid: 1,
           dosage: 'User',
           medicationname: 'password123',
         );
@@ -34,7 +34,7 @@ class MedicationCubit extends Cubit<AccountState> {
         return;
       }
       
-      MedicationDataModel? medicationDataModel;
+      Medication? medicationDataModel;
       final doc = await _firestore
           .collection('medication')
           .doc(currentUser.uid)
@@ -66,7 +66,7 @@ class MedicationCubit extends Cubit<AccountState> {
       //   }
       // });
       if (doc.exists && doc.data() != null) {
-          medicationDataModel = MedicationDataModel.fromJson(doc.data()!);
+          medicationDataModel = Medication.fromJson(doc.data()!);
 
           await CacheData.setMapData(
             key: "medicationData",
@@ -76,8 +76,8 @@ class MedicationCubit extends Cubit<AccountState> {
           emit(AccountSuccess(medicationDataModel: medicationDataModel));
         } else {
           // Create fallback user data if document doesn't exist
-          final fallbackUserData = MedicationDataModel(
-            userId: currentUser.uid,
+          final fallbackUserData = Medication(
+            userid: int.tryParse(currentUser.uid) ,
             dosage: 'User',
             medicationname: 'password123',
           );
