@@ -8,6 +8,7 @@ import 'package:touchhealth/data/model/medication_model.dart';
 class PatientData {
   int? userid;
   //DateTime? date;
+  String? medicalNumber;
   String? name; 
   String? surname;
   String? phone; 
@@ -24,6 +25,7 @@ class PatientData {
   PatientData({
     //this.date,
     this.userid,  
+    this.medicalNumber,
     this.name, 
     this.surname, 
     this.phone, 
@@ -41,6 +43,7 @@ class PatientData {
   factory PatientData.fromJson(Map<String, dynamic> json) {
     return PatientData(
       userid: json['userid'],
+      medicalNumber : json['medicalNumber'],
       name: json['name'],
       surname: json['surname'],
       phone: json['phone'],
@@ -68,6 +71,7 @@ class PatientData {
   Map<String, dynamic> toJson() {
     return {
       "userid": userid,
+      "medicalNumber":medicalNumber,
       "name": name,
       "surname": surname,
       "phone": phone,

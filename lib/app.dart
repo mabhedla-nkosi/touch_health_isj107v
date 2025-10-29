@@ -1,3 +1,4 @@
+import 'package:touchhealth/controller/auth/practitioner_auth/practitioner_auth_cubit.dart';
 import 'package:touchhealth/controller/conditions/conditions_cubit.dart';
 import 'package:touchhealth/controller/labscreening/labscreening_cubit.dart';
 import 'package:touchhealth/controller/medical_aid/medical_aid_cubit.dart';
@@ -52,6 +53,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider(
           create: (_) => PatientSearchCubit(),
+        ),
+        BlocProvider(
+          create: (_) => PractitionerAuthCubit(),
         ),
       ],
       child: ScreenUtilInit(
