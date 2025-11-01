@@ -1,21 +1,21 @@
 part of 'medical_aid_cubit.dart';
 
-// @immutable
-// abstract class AccountState {}
+@immutable
+abstract class AccountState {}
 
 
 // class AccountInitial extends AccountState {}
 
 // //? Update profile
-// class ProfileUpdateLoading extends AccountState {}
+class ProfileUpdateLoading extends AccountState {}
 
-// class ProfileUpdateSuccess extends AccountState {}
+class ProfileUpdateSuccess extends AccountState {}
 
-// class ProfileUpdateFailure extends AccountState {
-//   final String message;
+class ProfileUpdateFailure extends AccountState {
+  final String message;
 
-//   ProfileUpdateFailure({required this.message});
-// }
+  ProfileUpdateFailure({required this.message});
+}
 
 // //? user data
 // class AccountLoading extends AccountState {}

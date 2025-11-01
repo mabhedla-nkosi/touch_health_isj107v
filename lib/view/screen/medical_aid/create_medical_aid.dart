@@ -75,50 +75,70 @@ Future<void> _loadMedicalAidData() async {
     if (data != null) {
       setState(() {
         patientMedicalAid = data['medicalAidData'] ?? {};
+        print('patientMedicalAid');
+        print(patientMedicalAid);
         _medicalAidNumberController.text = patientMedicalAid['medicalnumber'] ?? '';
       });
     }
   }
 
-//Map<String, dynamic> _userData = CacheData.getMapData(key: "medicalAidData");
-//final medicalAidData = CacheData.getMapData(key: "medicalAidData");
-//late Map<String, dynamic> patientMedicalAid= {};
-// void _updateMedicalAidData() {
-//     if (_formKey.currentState!.validate()) {
-//       _formKey.currentState!.save();
-//       if (_medicalAidName == _userData['medicalaidname'] &&
-//       _medicalAidNumber == _userData['medicalaidnumber'] &&
-//       _patientId == _userData['userId'] &&
-//       _medicalAidId == _userData['medicalaidnumber']) {
-//         context.pop();
-//       } else {
-//         context
-//             .bloc<MedicalAidCubit>()
-//             .updateMedicalAid(
-//               medicalaidname: _medicalAidName ?? _userData['medicalaidname'],
-//               medicalaidnumber: _medicalAidNumber ?? _userData['medicalaidnumber'],
-//               medicaliadid: _medicalAidId ?? _userData['medicalaidid'],
-//               userId: _patientId ?? _userData['userId'],
-//             )
-//             .then((_) => context.pop());
-//       }
-//     }
-//   }
+  Map<String, dynamic> _userData = CacheData.getMapData(key: "medicalAidData");
+  final medicalAidData = CacheData.getMapData(key: "medicalAidData");
+  //late Map<String, dynamic> patientMedicalAid= {};
+  void _updateMedicalAidData() {
+      if (_formKey.currentState!.validate()) {
+        _formKey.currentState!.save();
+
+        final medicalAidMap = _userData['medicalAidData'] ?? {};
+    final cachedMedicalAidId = medicalAidMap['medicalaidid'] ?? 0;
+    final cachedUserId = medicalAidMap['userid'] ?? 0;
+
+    // avoid type mismatch (convert to int if coming as String)
+    int medicalAidId = int.tryParse('$cachedMedicalAidId') ?? 0;
+    int userId = int.tryParse('$cachedUserId') ?? 0;
+
+    // print('medicalAidId $medicalAidId');
+    // print('userID $userId');
+
+    if (medicalAidId == 0 || userId == 0) {
+      debugPrint('Missing userId or medicalAidId');
+      return;
+    }
+
+    
+        if (_medicalAidName == _userData['medicalaidname'] &&
+        _medicalAidNumber == _userData['medicalnumber'] &&
+        _patientId == _userData['userId'] &&
+        _medicalAidId == _userData['medicalnumber']) {
+          context.pop();
+        } else {
+          context
+              .bloc<MedicalAidCubit>()
+              .updateMedicalAid(
+                medicalAidName: _medicalAidName ?? _userData['medicalaidname'],
+                medicalAidNumber: _medicalAidNumber ?? _userData['medicalnumber'],
+                medicalAidId: medicalAidId,
+                userId: userId,
+              )
+              .then((_) => context.pop());
+        }
+      }
+  }
 
   @override
   Widget build(BuildContext context) {
     //print("Medical Aid Data in Create Medical Aid: $_userData");
     return BlocConsumer<MedicalAidCubit, MedicalAidSearchState>(
     listener: (context, state) {
-      // if (state is ProfileUpdateLoading) {
-      //   _isLoading = true;
-      // } else if (state is ProfileUpdateSuccess) {
-      //   _isLoading = false;
-      //   customSnackBar(context, "Medical Aid Details Updated Successfully", ColorManager.green);
-      // } else if (state is ProfileUpdateFailure) {
-      //   _isLoading = false;
-      //   customSnackBar(context, state.message, ColorManager.error);
-      // }
+      if (state is MedicalAidDetailsLoading) {
+        _isLoading = true;
+      } else if (state is MedicalAidDetailsSuccess) {
+        _isLoading = false;
+        customSnackBar(context, "Medical Aid Details Updated Successfully", ColorManager.green);
+      } else if (state is MedicalAidSearchError) {
+        _isLoading = false;
+        customSnackBar(context, state.message, ColorManager.error);
+      }
       if (state is MedicalAidSearchSuccess) {
       // update local data
         _loadMedicalAidData();
@@ -133,7 +153,7 @@ Future<void> _loadMedicalAidData() async {
               child: Column(
                 children: [
                   Gap(32.h),
-                  const CustomTitleBackButton(title: "Create Medical Aid"),
+                  const CustomTitleBackButton(title: "Medical Aid"),
                    Gap(20.h),
                   _buildMedicalAidDataFields(context, patientMedicalAid),
                   Gap(28.h),
@@ -141,7 +161,7 @@ Future<void> _loadMedicalAidData() async {
                     widget: _isLoading ? const ButtonLoadingIndicator() : null,
                     isDisabled: _isLoading,
                     title: "Update",
-                    //onPressed: _updateMedicalAidData,
+                    onPressed: _updateMedicalAidData,
                   ),
                   Gap(14.h),
                   CustomButton(

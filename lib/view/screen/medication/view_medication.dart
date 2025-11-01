@@ -61,7 +61,6 @@ Map<String, dynamic> _userData = CacheData.getMapData(key: "medicationData");
 
   @override
   Widget build(BuildContext context) {
-    //print("Medical Aid Data in Create Medical Aid: $_userData");
     return BlocConsumer<MedicationCubit, AccountState>(
     listener: (context, state) {
       if (state is ProfileUpdateLoading) {
