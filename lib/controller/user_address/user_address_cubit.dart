@@ -45,5 +45,56 @@ class UserAddressCubit extends Cubit<UserAddressSearchState> {
     }
   }
 
+  Future<void> updateUserAddress({
+      required int addressId,
+      required int userId,
+      required String postalAddress,
+      required String postalCode,
+      required String physicalAddress,
+      required String physicalCode,
+    }) async {
+      emit(UserAddressDetailsLoading());
+
+      try {
+        await dataService.updateUserAddress(
+          addressId: addressId,
+          userId: userId,
+          postalAddress: postalAddress,
+          postalCode: postalCode,
+          physicalAddress: physicalAddress,
+          physicalCode: physicalCode,
+        );
+
+        // Prepare map
+        final userAddressMap = {
+          'addressid': addressId,
+          'userid': userId,
+          'postaladdress': postalAddress,
+          'postalcode': postalCode,
+          'physicaladdress': physicalAddress,
+          'physicalcode': physicalCode,
+        };
+
+        // Store using your pattern
+        await CacheData.setMapData(
+          key: "userAddressData",
+          value: {'userAddressData': userAddressMap},
+        );
+
+        emit(UserAddressDetailsSuccess(
+          {
+            "addressid": addressId,
+            "userid": userId,
+            "postaladdress": postalAddress,
+            "postalcode": postalCode,
+            "physicaladdress": physicalAddress,
+            "physicalcode": physicalCode,
+          }
+        ));
+      } catch (e) {
+        emit(UserAddressSearchError(e.toString()));
+      }
+    }
+
 
 }

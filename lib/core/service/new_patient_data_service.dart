@@ -113,4 +113,59 @@ class PatientDataService {
   //     throw Exception("Failed to add user");
   //   }
   // }
+
+  Future<void> updateMedicalAid({
+    required String medicalAidName,
+    required String medicalAidNumber,
+    required int userId,
+    required int medicalAidId,
+  }) async {
+    final url = Uri.parse("$baseUrl/medicalaid/update");
+
+    final body = jsonEncode({
+      'medicalaidname': medicalAidName,
+      'medicalnumber': medicalAidNumber,
+      'userid': userId,
+      'medicalaidid': medicalAidId,
+    });
+
+    final headers = {'Content-Type': 'application/json'};
+
+    final response = await http.put(url, headers: headers, body: body);
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to update medical aid details: ${response.body}");
+    }
+  }
+
+  // Update address
+  Future<void> updateUserAddress({
+    required int addressId,
+    required int userId,
+    required String postalAddress,
+    required String postalCode,
+    required String physicalAddress,
+    required String physicalCode,
+  }) async {
+    final url = Uri.parse("$baseUrl/useraddress/update");
+
+    final body = jsonEncode({
+      "addressid": addressId,
+      "userid": userId,
+      "postaladdress": postalAddress,
+      "postalcode": postalCode,
+      "physicaladdress": physicalAddress,
+      "physicalcode": physicalCode,
+    });
+
+    final headers = {'Content-Type': 'application/json'};
+
+    final response = await http.put(url, headers: headers, body: body);
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to update address: ${response.body}");
+    }
+  }
+
+
 }

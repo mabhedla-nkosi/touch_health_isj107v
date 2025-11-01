@@ -47,10 +47,10 @@ class _UserAddressState extends State<UserAddress> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   bool _isLoading = false;
-  String? _medicalAidName;
-  String? _medicalAidNumber;
-  String? _patientId;
-  String? _medicalAidId; 
+  String? _postalAddress;
+  String? _postalCode;
+  String? _physicalAddress;
+  String? _physicalCode; 
 
 Future<void> _loadUserAddressData() async {
     final data = await CacheData.getMapData(key: "userAddressData");
@@ -65,45 +65,67 @@ Future<void> _loadUserAddressData() async {
     }
   }
 
-//Map<String, dynamic> _userData = CacheData.getMapData(key: "medicalAidData");
-//final medicalAidData = CacheData.getMapData(key: "medicalAidData");
-//late Map<String, dynamic> patientMedicalAid= {};
-// void _updateMedicalAidData() {
-//     if (_formKey.currentState!.validate()) {
-//       _formKey.currentState!.save();
-//       if (_medicalAidName == _userData['medicalaidname'] &&
-//       _medicalAidNumber == _userData['medicalaidnumber'] &&
-//       _patientId == _userData['userId'] &&
-//       _medicalAidId == _userData['medicalaidnumber']) {
-//         context.pop();
-//       } else {
-//         context
-//             .bloc<MedicalAidCubit>()
-//             .updateMedicalAid(
-//               medicalaidname: _medicalAidName ?? _userData['medicalaidname'],
-//               medicalaidnumber: _medicalAidNumber ?? _userData['medicalaidnumber'],
-//               medicaliadid: _medicalAidId ?? _userData['medicalaidid'],
-//               userId: _patientId ?? _userData['userId'],
-//             )
-//             .then((_) => context.pop());
-//       }
-//     }
-//   }
+  void _updateUserAddressData() {
+    if (_formKey.currentState!.validate()) {
+      _formKey.currentState!.save();
+
+      // Load cached data (already saved as { "userAddressData": {...} })
+      final cachedData = CacheData.getMapData(key: "userAddressData");
+      final addressMap = cachedData['userAddressData'] ?? {};
+
+      // Retrieve cached IDs
+      final cachedAddressId = addressMap['addressid'] ?? 0;
+      final cachedUserId = addressMap['userid'] ?? 0;
+
+      // Convert to int if needed (avoid type mismatch)
+      final int addressId = int.tryParse('$cachedAddressId') ?? 0;
+      final int userId = int.tryParse('$cachedUserId') ?? 0;
+
+      if (addressId == 0 || userId == 0) {
+        debugPrint('Missing userId or addressId');
+        return;
+      }
+
+      // Check if nothing changed (optional optimization)
+      if ((_postalAddress == addressMap['postaladdress']) &&
+          (_postalCode == addressMap['postalcode']) &&
+          (_physicalAddress == addressMap['physicaladdress']) &&
+          (_physicalCode == addressMap['physicalcode'])) {
+        debugPrint('ℹ️ No changes detected');
+        context.pop();
+        return;
+      }
+
+      // Perform the update
+      context
+          .bloc<UserAddressCubit>()
+          .updateUserAddress(
+            addressId: addressId,
+            userId: userId,
+            postalAddress: _postalAddress ?? addressMap['postaladdress'],
+            postalCode: _postalCode ?? addressMap['postalcode'],
+            physicalAddress: _physicalAddress ?? addressMap['physicaladdress'],
+            physicalCode: _physicalCode ?? addressMap['physicalcode'],
+          )
+          .then((_) => context.pop());
+    }
+  }
+
 
   @override
   Widget build(BuildContext context) {
     //print("Medical Aid Data in Create Medical Aid: $_userData");
     return BlocConsumer<UserAddressCubit, UserAddressSearchState>(
     listener: (context, state) {
-      // if (state is ProfileUpdateLoading) {
-      //   _isLoading = true;
-      // } else if (state is ProfileUpdateSuccess) {
-      //   _isLoading = false;
-      //   customSnackBar(context, "Medical Aid Details Updated Successfully", ColorManager.green);
-      // } else if (state is ProfileUpdateFailure) {
-      //   _isLoading = false;
-      //   customSnackBar(context, state.message, ColorManager.error);
-      // }
+      if (state is UserAddressSearchLoading) {
+        _isLoading = true;
+      } else if (state is UserAddressDetailsSuccess) {
+        _isLoading = false;
+        customSnackBar(context, "User Address Details Updated Successfully", ColorManager.green);
+      } else if (state is UserAddressSearchError) {
+        _isLoading = false;
+        customSnackBar(context, state.message, ColorManager.error);
+      }
       if (state is UserAddressSearchSuccess) {
       // update local data
         _loadUserAddressData();
@@ -126,7 +148,7 @@ Future<void> _loadUserAddressData() async {
                     widget: _isLoading ? const ButtonLoadingIndicator() : null,
                     isDisabled: _isLoading,
                     title: "Update",
-                    //onPressed: _updateMedicalAidData,
+                    onPressed: _updateUserAddressData,
                   ),
                   Gap(14.h),
                   CustomButton(
@@ -161,7 +183,7 @@ Future<void> _loadUserAddressData() async {
             keyboardType: TextInputType.multiline,
             maxLines: null,
             onSaved: (data) {
-              _medicalAidNumber = data;
+              _postalAddress = data;
             },
             validator: cubit.normalValueValidator,
           ),
@@ -171,7 +193,7 @@ Future<void> _loadUserAddressData() async {
             title: "Postal Address Code",
             hintText: "Enter your Postal Address Code",
             onSaved: (data) {
-              _medicalAidNumber = data;
+              _postalCode = data;
             },
             validator: cubit.normalValueValidator,
           ),
@@ -183,17 +205,17 @@ Future<void> _loadUserAddressData() async {
             keyboardType: TextInputType.multiline,
             maxLines: null,
             onSaved: (data) {
-              _medicalAidNumber = data;
+              _physicalAddress = data;
             },
             validator: cubit.normalValueValidator,
           ),
           CustomTextFormField(
-            controller: _postalAddressController,
+            controller: _physicalAddressCodeController,
             keyboardType: TextInputType.text,
             title: "Physical Address Code",
             hintText: "Enter your Physical Address Code",
             onSaved: (data) {
-              _medicalAidNumber = data;
+              _physicalCode = data;
             },
             validator: cubit.normalValueValidator,
           ),
