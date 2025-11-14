@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:developer';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:touchhealth/data/model/medical_aid_model.dart';
 import 'package:touchhealth/data/model/user_address_model.dart';
 import 'package:touchhealth/data/model/patient_data_model.dart';
+import 'package:touchhealth/data/model/user_data_model.dart';
 
 class PatientDataService {
   final String baseUrl = "http://10.0.2.2:5000";
@@ -101,6 +104,22 @@ class PatientDataService {
     }
   }
 
+  Future<List<UserDataModel>> getProfileDataByUserId(int userId) async {
+    final response = await http.get(Uri.parse("$baseUrl/users/$userId"));
+    if (response.statusCode == 200) {
+      
+
+      final decoded = jsonDecode(response.body);
+      
+      final userData = UserDataModel.fromJson(decoded['user_json']);
+      final returnUserData = [userData].toList();
+
+        return returnUserData;
+    } else {
+      throw Exception("Failed to load users");
+    }
+  }
+
   // Future<PatientData> addUser(String name, int age) async {
   //   final response = await http.post(
   //     Uri.parse("$baseUrl/users"),
@@ -113,6 +132,93 @@ class PatientDataService {
   //     throw Exception("Failed to add user");
   //   }
   // }
+
+  Future<bool> updateUserName({
+      required int userId,
+      required String newName,
+    }) async {
+      final url = Uri.parse("$baseUrl/updateUserName");
+
+      try {
+        final response = await http.put(
+          url,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'userid': userId,
+            'name': newName,
+          }),
+        ).timeout(const Duration(seconds: 10));
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return data['success'] == true;
+        } else {
+          return false;
+        }
+      } catch (e) {
+        print("Error updating user name: $e");
+        return false;
+      }
+    }
+
+  Map<String, dynamic>? _cachedUser;
+  Future<bool> logIn({required String email, required String password}) async {
+    final response = await http.post(
+      Uri.parse('$baseUrl/login'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['success'] == true) {
+        _cachedUser = data['user']; // optional: keep in memory
+        return true;
+      }
+    }
+    return false;
+  }
+
+  // Get cached user
+  Map<String, dynamic> getCachedUser() {
+    if (_cachedUser != null) {
+      return _cachedUser!;
+    } else {
+      throw Exception("No cached user found. Please log in first.");
+    }
+  }
+
+
+  Future<void> updateUserAccount(UserDataModel user) async {
+  final int parsedUserId = int.tryParse(user.userId ?? '') ?? 0;
+
+  if (parsedUserId == 0) {
+    throw Exception("Invalid userId for update");
+  }
+
+  final url = Uri.parse("$baseUrl/updateUserAccount/$parsedUserId");
+
+  final body = jsonEncode({
+    'name': user.name,
+    'surname': user.surname,
+    'phone': user.phone,
+    'email': user.email,
+    'password': user.password,
+    'id_passportnumber': user.id_passportnumber,
+    'gender': user.gender,
+    'dob': user.dob,
+    'nationality': user.nationality,
+  });
+
+  final headers = {'Content-Type': 'application/json'};
+
+  final response = await http.put(url, headers: headers, body: body);
+
+  if (response.statusCode != 200) {
+    throw Exception("Failed to update account: ${response.body}");
+  }
+}
+
 
   Future<void> updateMedicalAid({
     required String medicalAidName,

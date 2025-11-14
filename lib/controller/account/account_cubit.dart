@@ -1,8 +1,10 @@
 import 'dart:developer';
+import 'dart:developer' as dev;
 
 import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:touchhealth/core/cache/cache.dart';
+import 'package:touchhealth/core/service/new_patient_data_service.dart';
 import 'package:touchhealth/data/model/user_data_model.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebaseUsersService;
 import 'package:meta/meta.dart';
@@ -17,70 +19,197 @@ class AccountCubit extends Cubit<AccountState> {
   final _firestore = FirebaseFirestore.instance;
   final apiUserService.UserService userService = apiUserService.UserService();
 
-  Future<void> getprofileData() async {
-    emit(AccountLoading());
-    try {
-      // Check if user is authenticated
-      final currentUser = firebaseUsersService.FirebaseAuth.instance.currentUser;
-      if (currentUser == null) {
-        // Create demo user data for unauthenticated users
-        final demoUserData = UserDataModel(
-          name: 'Demo',
-          userId: 'demo_user',
-          surname: 'User',
-          phone: '000-000-0000',
-          //dateofrecording: '2025-09-18',
-          email: 'demo@touchhealth.com',
-          password: 'password123',
-          id_passportnumber: 'ID123456',
-          gender: 'Male',
-          dob: '1990-01-01',
-          nationality: 'DemoLand',
-        );
+  // Future<void> getprofileData() async {
+  //   emit(AccountLoading());
+  //   try {
+  //     // Check if user is authenticated
+  //     final currentUser = firebaseUsersService.FirebaseAuth.instance.currentUser;
+      
+  //     if (currentUser == null) {
+  //       // Create demo user data for unauthenticated users
+  //       final demoUserData = UserDataModel(
+  //         name: 'Demo',
+  //         userId: 'demo_user',
+  //         surname: 'User',
+  //         phone: '000-000-0000',
+  //         //dateofrecording: '2025-09-18',
+  //         email: 'demo@touchhealth.com',
+  //         password: 'password123',
+  //         id_passportnumber: 'ID123456',
+  //         gender: 'Male',
+  //         dob: '1990-01-01',
+  //         nationality: 'South Africa',
+  //       );
 
-        await CacheData.setData(key: "name", value: demoUserData.name);
-        await CacheData.setMapData(key: "userData", value: demoUserData.toJson());
-        emit(AccountSuccess(userDataModel: demoUserData));
+  //       await CacheData.setData(key: "name", value: demoUserData.name);
+  //       await CacheData.setMapData(key: "userData", value: demoUserData.toJson());
+  //       emit(AccountSuccess(userDataModel: demoUserData));
+  //       return;
+  //     }
+      
+  //     UserDataModel? userDataModel;
+  //     _firestore
+  //         .collection('users')
+  //         .doc(currentUser.uid)
+  //         .snapshots()
+  //         .listen((event) {
+  //       if (event.exists && event.data() != null) {
+  //         userDataModel = UserDataModel.fromJson(event.data()!);
+  //         CacheData.setData(key: "name", value: userDataModel!.name);
+  //         CacheData.setMapData(key: "userData", value: userDataModel!.toJson());
+  //         emit(AccountSuccess(userDataModel: userDataModel!));
+  //       } else {
+  //         // Create fallback user data if document doesn't exist
+  //         final fallbackUserData = UserDataModel(
+  //           name: currentUser.displayName ?? 'User',
+  //           userId: currentUser.uid,
+  //           surname: '',
+  //           phone: '',
+  //           //dateofrecording: '',
+  //           email: currentUser.email ?? 'user@example.com',
+  //           password: '',
+  //           id_passportnumber: '',
+  //           gender: '',
+  //           dob: '',
+  //           nationality: '',
+  //         );
+  //         CacheData.setData(key: "name", value: fallbackUserData.name);
+  //         CacheData.setMapData(key: "userData", value: fallbackUserData.toJson());
+  //         emit(AccountSuccess(userDataModel: fallbackUserData));
+  //       }
+  //     });
+  //   } on FirebaseException catch (err) {
+  //     emit(AccountFailure(message: err.toString()));
+  //   } catch (err) {
+  //     emit(AccountFailure(message: err.toString()));
+  //   }
+  // }
+
+  Future<void> getProfileData() async {
+    emit(AccountLoading());
+
+    try {
+      // -------------------------
+      // Check cached user first
+      // -------------------------
+      final cachedUserData = CacheData.getMapData(key: "userData");
+
+
+      if (cachedUserData != null && cachedUserData['userData'] != null) {
+        final userMap = cachedUserData['userData'];
+
+        final userDataModel = UserDataModel.fromJson(
+          cachedUserData['userData'] as Map<String, dynamic>,
+        );
+        
+        await CacheData.setData(key: "name", value: userMap['name']?.toString());
+        await CacheData.setMapData(key: "userData", value: cachedUserData);
+
+        emit(AccountSuccess(userDataModel: userDataModel));
         return;
       }
+
+      // -------------------------
+      // If no cached user, create demo user
+      // -------------------------
       
-      UserDataModel? userDataModel;
-      _firestore
-          .collection('users')
-          .doc(currentUser.uid)
-          .snapshots()
-          .listen((event) {
-        if (event.exists && event.data() != null) {
-          userDataModel = UserDataModel.fromJson(event.data()!);
-          CacheData.setData(key: "name", value: userDataModel!.name);
-          CacheData.setMapData(key: "userData", value: userDataModel!.toJson());
-          emit(AccountSuccess(userDataModel: userDataModel!));
-        } else {
-          // Create fallback user data if document doesn't exist
-          final fallbackUserData = UserDataModel(
-            name: currentUser.displayName ?? 'User',
-            userId: currentUser.uid,
-            surname: '',
-            phone: '',
-            //dateofrecording: '',
-            email: currentUser.email ?? 'user@example.com',
-            password: '',
-            id_passportnumber: '',
-            gender: '',
-            dob: '',
-            nationality: '',
-          );
-          CacheData.setData(key: "name", value: fallbackUserData.name);
-          CacheData.setMapData(key: "userData", value: fallbackUserData.toJson());
-          emit(AccountSuccess(userDataModel: fallbackUserData));
-        }
-      });
-    } on FirebaseException catch (err) {
-      emit(AccountFailure(message: err.toString()));
+      final demoUserData = UserDataModel(
+        name: 'Demo',
+        userId: '2',
+        surname: 'User',
+        phone: '000-000-0000',
+        email: 'demo@touchhealth.com',
+        password: 'password123',
+        id_passportnumber: 'ID123456',
+        gender: 'Male',
+        dob: '1990-01-01',
+        nationality: 'South Africa',
+      );
+
+      await CacheData.setData(key: "name", value: demoUserData.name);
+      await CacheData.setMapData(key: "userData", value: demoUserData.toJson());
+      emit(AccountSuccess(userDataModel: demoUserData));
+      return;
+
+
+      
     } catch (err) {
       emit(AccountFailure(message: err.toString()));
     }
   }
+
+
+  static final PatientDataService dataService = PatientDataService();
+
+  Future<void> searchProfileDataByUserId(int userId) async {
+    if (userId==0) {      
+      return;
+    }
+
+    try {
+      dev.log('Searching user details by id: $userId');      
+      List<UserDataModel> actualData =await dataService.getProfileDataByUserId(userId);
+      Map<String, dynamic> userMap= {};
+
+        for (var userData in actualData) {
+            userMap = userData.toJson();
+            await CacheData.setMapData(
+                key: "userDataActual",
+                value: {'userDataActual': userMap}, // wrap in a map if needed
+              );
+            
+        }
+      return;
+
+    } catch (e) {
+      dev.log('Error finding patient: $e');
+      return null;
+    }
+  }
+
+  Future<void> updateAccount({
+  required String userId,
+  String? name,
+  String? surname,
+  String? phone,
+  String? email,
+  String? password,
+  String? id_passportnumber,
+  String? gender,
+  String? dob,
+  String? nationality,
+}) async {
+  emit(ProfileUpdateLoading());
+
+  try {
+    final user = UserDataModel(
+      userId: userId,
+      name: name,
+      surname: surname,
+      phone: phone,
+      email: email,
+      password: password,
+      id_passportnumber: id_passportnumber,
+      gender: gender,
+      dob: dob,
+      nationality: nationality,
+    );
+
+    
+    await dataService.updateUserAccount(user);
+
+    // Cache the latest user data
+    await CacheData.setMapData(
+      key: "userDataActual",
+      value: {'userDataActual': user.toJson()},
+    );
+
+    emit(ProfileUpdateSuccess());
+  } catch (e) {
+    emit(ProfileUpdateFailure(message: e.toString()));
+  }
+}
+
 
   Future<void> fetchUserById(int id) async {
     try {
@@ -212,22 +341,56 @@ class AccountCubit extends Cubit<AccountState> {
 
   //? update user name
 
+  // Future<void> updateUserName({required String newName}) async {
+  //   emit(ProfileUpdateLoading());
+  //   try {
+  //     await Future.delayed(const Duration(milliseconds: 400));
+  //     await _firestore
+  //         .collection('users')
+  //         .doc(firebaseUsersService.FirebaseAuth.instance.currentUser!.uid)
+  //         .update({'name': newName})
+  //         .whenComplete(() => emit(ProfileUpdateSuccess()))
+  //         .timeout(const Duration(seconds: 5),
+  //             onTimeout: () => emit(ProfileUpdateFailure(
+  //                 message: "There was an error, please try again")));
+  //   } on FirebaseException catch (err) {
+  //     emit(ProfileUpdateFailure(message: err.toString()));
+  //   }
+  // }
+
   Future<void> updateUserName({required String newName}) async {
     emit(ProfileUpdateLoading());
+
     try {
-      await Future.delayed(const Duration(milliseconds: 400));
-      await _firestore
-          .collection('users')
-          .doc(firebaseUsersService.FirebaseAuth.instance.currentUser!.uid)
-          .update({'name': newName})
-          .whenComplete(() => emit(ProfileUpdateSuccess()))
-          .timeout(const Duration(seconds: 5),
-              onTimeout: () => emit(ProfileUpdateFailure(
-                  message: "There was an error, please try again")));
-    } on FirebaseException catch (err) {
+      // Get logged-in user from cache
+      final cachedUser = CacheData.getMapData(key: "userData");
+      final userId = int.tryParse('${cachedUser['userid']}') ?? 0;
+
+      if (userId == 0) {
+        emit(ProfileUpdateFailure(message: "User not found in cache"));
+        return;
+      }
+
+      // Call DataService to update name on the API
+      final success = await dataService.updateUserName(userId: userId, newName: newName);
+
+      if (success) {
+        // Update cache so UI shows new name immediately
+        cachedUser['name'] = newName;
+        await CacheData.setMapData(key: "userData", value: cachedUser);
+
+        emit(ProfileUpdateSuccess());
+
+        // (Optional) You can re-emit AccountSuccess if your UI reads from it:
+       emit(AccountSuccess(userDataModel: UserDataModel.fromJson(cachedUser)));
+      } else {
+        emit(ProfileUpdateFailure(message: "Failed to update name"));
+      }
+    } catch (err) {
       emit(ProfileUpdateFailure(message: err.toString()));
     }
   }
+
 
   Future<void> updateProfile({
     String? name,

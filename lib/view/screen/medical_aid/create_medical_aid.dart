@@ -75,15 +75,13 @@ Future<void> _loadMedicalAidData() async {
     if (data != null) {
       setState(() {
         patientMedicalAid = data['medicalAidData'] ?? {};
-        print('patientMedicalAid');
-        print(patientMedicalAid);
         _medicalAidNumberController.text = patientMedicalAid['medicalnumber'] ?? '';
       });
     }
   }
 
   Map<String, dynamic> _userData = CacheData.getMapData(key: "medicalAidData");
-  final medicalAidData = CacheData.getMapData(key: "medicalAidData");
+  //final medicalAidData = CacheData.getMapData(key: "medicalAidData");
   //late Map<String, dynamic> patientMedicalAid= {};
   void _updateMedicalAidData() {
       if (_formKey.currentState!.validate()) {

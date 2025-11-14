@@ -101,7 +101,7 @@ class _OldPasswordScreenState extends State<OldPasswordScreen> {
                           onSaved: (data) {
                             _password = data;
                           },
-                          validator: validator.validatePassword,
+                          //validator: validator.validatePassword,
                         ),
                       ),
                       Gap(12.h),

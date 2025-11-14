@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class UserDataModel {
   String? name;
   String? userId;
@@ -25,7 +27,7 @@ class UserDataModel {
 
   UserDataModel.fromJson(Map<String, dynamic> json)
       : name = json['name'] ?? '',
-      userId = json['userid'] ?? '',
+      userId = json['userid']?.toString() ?? '',
       surname = json['surname'] ?? '',
       phone = json['phone'] ?? '',
       email = json['email'] ?? '',
@@ -51,7 +53,8 @@ class UserDataModel {
   }
 
   @override
-  String toString() {
-    return 'User(userId: $userId, name: $name, surname: $surname, email: $email, gender: $gender)';
-  }
+  String toString() => jsonEncode(toJson());
+  // String toString() {
+  //   return 'User(userId: $userId, name: $name, surname: $surname, email: $email, gender: $gender)';
+  // }
 }
