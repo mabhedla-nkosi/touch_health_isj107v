@@ -71,7 +71,7 @@ class _NFCScreenState extends State<NFCScreen> {
   @override
   void initState() {
     super.initState();
-    context.bloc<account.AccountCubit>().getprofileData();
+    context.bloc<account.AccountCubit>().getProfileData();
     //context.bloc<medicalaid.MedicalAidCubit>().searchMedicalAidByUserId();
     //context.bloc<conditions.ConditionsCubit>().getConditionsData();
     context.bloc<labscreening.LabScreeningCubit>().getLabScreeningData();
@@ -944,9 +944,6 @@ class _NFCScreenState extends State<NFCScreen> {
 
             context.read<patientCubit.PatientSearchCubit>()
               .searchPatientsByEmail(fullEmail.toString());
-
-            
-
           }
         },
       ),
@@ -995,6 +992,9 @@ class _NFCScreenState extends State<NFCScreen> {
 
             context.read<useraddress.UserAddressCubit>()
             .searchUserAddressByUserId(userId);
+
+            context.read<account.AccountCubit>()
+            .searchProfileDataByUserId(userId);
 
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("Patient data loaded successfully")),

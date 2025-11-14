@@ -34,7 +34,7 @@ class _AccountScreenState extends State<AccountScreen> {
   @override
   void initState() {
     super.initState();
-    context.bloc<account.AccountCubit>().getprofileData();
+    context.bloc<account.AccountCubit>().getProfileData();
     // context.bloc<medicalaid.MedicalAidCubit>().getMedicalAidData();
     // context.bloc<conditions.ConditionsCubit>().getConditionsData();
     // context.bloc<labscreening.LabScreeningCubit>().getLabScreeningData();
@@ -152,17 +152,17 @@ class _AccountScreenState extends State<AccountScreen> {
                   //       Navigator.pushNamed(context, RouteManager.viewConditions),
                   // ),
                   // divider,
-                  BuildProfileCard(
-                    title: "Dark Mode",
-                    image: ImageManager.darkModeIcon,
-                    onPressed: () {},
-                  ),
-                  divider,
-                  BuildProfileCard(
-                      title: "Languages",
-                      image: ImageManager.languageIcon,
-                      onPressed: () {}),
-                  divider,
+                  // BuildProfileCard(
+                  //   title: "Dark Mode",
+                  //   image: ImageManager.darkModeIcon,
+                  //   onPressed: () {},
+                  // ),
+                  // divider,
+                  // BuildProfileCard(
+                  //     title: "Languages",
+                  //     image: ImageManager.languageIcon,
+                  //     onPressed: () {}),
+                  // divider,
                   BuildProfileCard(
                     title: "Change Password",
                     image: ImageManager.changePasswordIcon,
@@ -199,14 +199,14 @@ class _AccountScreenState extends State<AccountScreen> {
                     },
                   ),
                   divider,
-                  BuildProfileCard(
-                    title: "Delete Account",
-                    image: ImageManager.deteteAccountIcon,
-                    color: ColorManager.error,
-                    onPressed: () =>
-                        Navigator.pushNamed(context, RouteManager.reAuthScreen),
-                  ),
-                  divider,
+                  // BuildProfileCard(
+                  //   title: "Delete Account",
+                  //   image: ImageManager.deteteAccountIcon,
+                  //   color: ColorManager.error,
+                  //   onPressed: () =>
+                  //       Navigator.pushNamed(context, RouteManager.reAuthScreen),
+                  // ),
+                  // divider,
                   BuildProfileCard(
                       title: "Logout",
                       iconData: Icons.logout,

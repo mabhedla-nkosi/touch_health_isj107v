@@ -27,11 +27,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final userService = UserService();
   late Future<User?> futureUser;
 
+  Map<String, dynamic> userFinalData = {};
+
   @override
   void initState() {
     super.initState();
-    context.read<AccountCubit>().fetchUserById(1);
+    //context.read<AccountCubit>().fetchUserById(1);
+    _loadUserData();
   }
+
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _surnameController = TextEditingController();
+  final TextEditingController _idController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _dobController = TextEditingController();
 
   @override
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
@@ -111,38 +120,94 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Item("Vietnamese")
 ];
 
-  final Map<String, dynamic> _userData = CacheData.getMapData(key: "userData");
-  bool _isloading = false;
-
-  void _updateUserData() {
-    if (_formKey.currentState!.validate()) {
-      _formKey.currentState!.save();
-      if (_name == _userData['name'] &&
-      _surname == _userData['surname'] &&
-      _phone == _userData['phone'] &&
-      _email == _userData['email'] &&
-      _id_passportnumber == _userData['id_passportnumber'] &&
-      _gender == _userData['gender'] &&
-      _dob == _userData['dob'] &&
-      _nationality == _userData['nationality']) {
-        context.pop();
-      } else {
-        context
-            .bloc<AccountCubit>()
-            .updateProfile(
-              name: _name ?? _userData['name'],
-              surname: _surname ?? _userData['surname'],
-              phone: _phone ?? _userData['phone'],
-              email: _email ?? _userData['email'],
-              id_passportnumber: _id_passportnumber ?? _userData['id_passportnumber'],
-              gender: _gender ?? _userData['gender'],
-              dob: _dob ?? _userData['dob'],
-              nationality: _nationality ?? _userData['nationality'],
-            )
-            .then((_) => context.pop());
-      }
+Future<void> _loadUserData() async {
+    final data = await CacheData.getMapData(key: "userDataActual");
+    if (data != null) {
+      setState(() {
+        userFinalData = data['userDataActual'] ?? {};
+         _nameController.text = userFinalData['name'] ?? '';
+        _surnameController.text = userFinalData['surname'] ?? '';
+        _idController.text = userFinalData['id_passportnumber'] ?? '';
+        _phoneController.text = userFinalData['phone'] ?? '';
+        _dobController.text = formatDateForDisplay(userFinalData['dob']);
+      });
     }
   }
+
+  final Map<String, dynamic> _userData = CacheData.getMapData(key: "userDataActual");
+  bool _isloading = false;
+
+  String formatDateForDisplay(String? apiDate) {
+  if (apiDate == null || apiDate.isEmpty) return '';
+  try {
+    final date = DateTime.parse(apiDate); // parses "2025-11-01"
+    return "${date.day.toString().padLeft(2, '0')}/${date.month.toString().padLeft(2, '0')}/${date.year}";
+  } catch (e) {
+    return apiDate; // fallback in case it's already formatted
+  }
+}
+
+  // void _updateUserData() {
+  //   if (_formKey.currentState!.validate()) {
+  //     _formKey.currentState!.save();
+  //     if (_name == _userData['name'] &&
+  //     _surname == _userData['surname'] &&
+  //     _phone == _userData['phone'] &&
+  //     _email == _userData['email'] &&
+  //     _id_passportnumber == _userData['id_passportnumber'] &&
+  //     _gender == _userData['gender'] &&
+  //     _dob == _userData['dob'] &&
+  //     _nationality == _userData['nationality']) {
+  //       context.pop();
+  //     } else {
+  //       context
+  //           .bloc<AccountCubit>()
+  //           .updateProfile(
+  //             name: _name ?? _userData['name'],
+  //             surname: _surname ?? _userData['surname'],
+  //             phone: _phone ?? _userData['phone'],
+  //             email: _email ?? _userData['email'],
+  //             id_passportnumber: _id_passportnumber ?? _userData['id_passportnumber'],
+  //             gender: _gender ?? _userData['gender'],
+  //             dob: _dob ?? _userData['dob'],
+  //             nationality: _nationality ?? _userData['nationality'],
+  //           )
+  //           .then((_) => context.pop());
+  //     }
+  //   }
+  // }
+
+  void _updateAccountData() {
+  if (_formKey.currentState!.validate()) {
+    _formKey.currentState!.save();
+
+    final cached = CacheData.getMapData(key: "userDataActual");
+    final userMap = cached['userDataActual'] ?? {};
+
+    final cachedUserId = userMap['userid'] ?? '';
+
+    final String userId = _userId ?? cachedUserId;
+
+    if (userId.isEmpty) {
+      debugPrint('Missing userId');
+      return;
+    }
+
+    context.bloc<AccountCubit>().updateAccount(
+      userId: userId,
+      name: _name ?? userMap['name'],
+      surname: _surname ?? userMap['surname'],
+      phone: _phone ?? userMap['phone'],
+      email: _email ?? userMap['email'],
+      password: _password ?? userMap['password'],
+      id_passportnumber: _id_passportnumber ?? userMap['id_passportnumber'],
+      gender: _gender ?? userMap['gender'],
+      dob: _dob ?? userMap['dob'],
+      nationality: _nationality ?? userMap['nationality'],
+    ).then((_) => context.pop());
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
@@ -190,15 +255,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     children: [
                       _buildUserCard(context,
                           //char: _userData['name'][0], name: _userData['name']),
-                          char: (user.name?.isNotEmpty ?? false)
-                                ? user.name!.substring(0, 1)
+                          char: (userFinalData['name']?.isNotEmpty ?? false)
+                                ? userFinalData['name']!.substring(0, 1)
                                 : "?",
-                            name: user.name ?? "Unknown",
+                            name: userFinalData['name'] ?? "Unknown",
                           ),
                       _buildUserProfileDataFields(
                         context,
-                        _userData,
-                        user
+                        userFinalData
                       ),
                       Gap(28.h),
                       CustomButton(
@@ -207,7 +271,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               : null,
                           isDisabled: _isloading,
                           title: "Update",
-                          onPressed: _updateUserData),
+                          onPressed: _updateAccountData),
                       Gap(14.h),
                       CustomButton(
                         title: "Cancel",
@@ -268,7 +332,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Widget _buildUserProfileDataFields(
-      BuildContext context, Map<String, dynamic> userData, User user) {
+      BuildContext context, Map<String, dynamic> userData,) {
     final cubit = context.bloc<ValidationCubit>();
     return Form(
       key: _formKey,
@@ -276,7 +340,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         children: [
           CustomTextFormField(
             //initialValue: userData['name'],
-            initialValue: user.name,
+            //initialValue: user.name,
+            controller: _nameController,
             keyboardType: TextInputType.name,
             title: "Name",
             hintText: "Enter your Name",
@@ -287,7 +352,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
           CustomTextFormField(
             //initialValue: userData['surname'],
-            initialValue: user.surname,
+            //initialValue: user.surname,
+            controller: _surnameController,
             keyboardType: TextInputType.name,
             title: "Surname",
             hintText: "Enter your Surname",
@@ -298,7 +364,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
           CustomTextFormField(
             //initialValue: userData['id_passportnumber'],
-            initialValue: user.id_passportnumber,
+            //initialValue: user.id_passportnumber,
+            controller: _idController,
             keyboardType: TextInputType.text,
             title: "Id / passport number",
             hintText: "Enter your ID or Passport Number",
@@ -309,7 +376,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
           CustomTextFormField(
             //initialValue: userData['contactinfo'],
-            initialValue: user.contactinfo,
+            //initialValue: user.contactinfo,
+            controller: _phoneController,
             keyboardType: TextInputType.phone,
             title: "Phone Number",
             hintText: "Enter your phone Number",
@@ -320,7 +388,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ),
           CustomTextFormField(
             //initialValue: userData['dob'],
-            initialValue: user.dob,
+            //initialValue: user.dob,
+            controller: _dobController,
             keyboardType: TextInputType.datetime,
             title: "Date of birth",
             hintText: "Enter your Date of birth",
@@ -342,9 +411,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             //       orElse: () => genderList.first, // fallback
             //     )
             //   : null,
-            value: user.gender != null
+            value: userData['gender'] != null
               ? genderList.firstWhere(
-                  (c) => c.name == user.gender,
+                  (c) => c.name == userData['gender'],
                   orElse: () => genderList.first, // fallback
                 )
               : null,
@@ -359,9 +428,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               //     orElse: () => nationalityList.first, // fallback
               //   )
               // : null,
-              value: user.nationality != null
+              value: userData['nationality'] != null
               ? nationalityList.firstWhere(
-                  (c) => c.name == user.nationality,
+                  (c) => c.name == userData['nationality'],
                   orElse: () => nationalityList.first, // fallback
                 )
               : null,

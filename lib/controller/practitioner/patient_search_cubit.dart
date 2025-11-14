@@ -97,10 +97,20 @@ class PatientSearchCubit extends Cubit<PatientSearchState> {
     emit(PatientSearchLoading());
 
     try {
-      final patient = await PatientLookupService.findPatientByMedicalNumber(medicalNumber);
+      final patient = await PatientLookupService.searchPatientsByMedicalNumber(medicalNumber);
+
+      List<Map<String, dynamic>> patientList = [];
+      if (patient is Map<String, dynamic>) {
+        patientList = patient;
+      } else if (patient is List) {
+        patientList = List<Map<String, dynamic>>.from(patient);
+      }
       
-      if (patient != null) {
-        emit(PatientSearchSuccess([patient]));
+      if (patientList.isNotEmpty) {
+        print('patientList');
+        print(patientList);
+        emit(PatientSearchSuccess(patientList));
+        print("Emitted PatientSearchSuccess");
       } else {
         emit(PatientSearchError('Patient not found with medical number: $medicalNumber'));
       }

@@ -173,13 +173,12 @@ class AppRouter {
           child: const PractitionerLoginScreen(),
         ));
       case RouteManager.practitionerDashboard:
-        return PageTransitionManager.materialPageRoute(MultiBlocProvider(
-          providers: [
-            BlocProvider(create: (_) => PractitionerAuthCubit()),
-            BlocProvider(create: (_) => PatientSearchCubit()),
-          ],
-          child: const PractitionerDashboard(),
-        ));
+        return PageTransitionManager.materialPageRoute(
+          BlocProvider(
+            create: (_) => PractitionerAuthCubit(),
+            child: const PractitionerDashboard(),
+          )
+        );
       case RouteManager.patientDetails:
         final patient = settings.arguments as Map<String, dynamic>;
         return PageTransitionManager.materialSlideTransition(BlocProvider(

@@ -11,7 +11,7 @@ import 'package:touchhealth/data/model/patient_data_model.dart';
 
 class PatientLookupService {
   //static const String baseUrl = 'https://jsonplaceholder.typicode.com/users';
-  //static const String baseUrl = 'http://10.0.2.2:5000/users';
+  static const String baseUrl = 'http://10.0.2.2:5000/users';
   static const Duration timeoutDuration = Duration(seconds: 10);
   static final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -287,6 +287,36 @@ class PatientLookupService {
     }
   }
 
+  static Future<List<Map<String, dynamic>>> searchPatientsByMedicalNumber(String medicalNumber) async {
+    try {
+      dev.log('Searching patients by medicalNumber: $medicalNumber');
+      List<Map<String, dynamic>> results = [];
+      // Add demo patients if they match
+      //final demoPatients = _getAllDemoPatients();
+      int userId = _convertMedicalNumberToUserId(medicalNumber);
+      //List<PatientData> actualData =await dataService.getPatientData();
+      List<PatientData> actualData =await dataService.getPatientDataById(userId);
+          
+    if (medicalNumber.trim().isEmpty) {
+      // If no search query, return all patients
+      results = [];
+    } else {
+      for (var patient in actualData) {
+        if ((patient.userid == userId)) {
+          final patientMap = patient.toJson();
+          patientMap["medicalNumber"] = "MED${patient.userid}";
+          results.add(patientMap);
+        }
+      }
+    }
+      
+      return results;
+    } catch (e) {
+      dev.log('Error searching patients: $e');
+      return [];
+    }
+  }
+
   static Future<List<Map<String, dynamic>>> searchPatientsByEmail(String searchQuery) async {
     try {
       dev.log('Searching patients by email: $searchQuery');
@@ -533,18 +563,38 @@ class PatientLookupService {
   }
 
   static String _getAge(String dobString) {
-    // Parse the string to a DateTime
-    final dob = DateTime.tryParse(dobString);
-    
+      if (dobString == null || dobString.isEmpty) {
+      return '';
+    }
+
+    DateTime? dob;
+
+    try {
+      // Try parsing common formats
+      if (dobString.contains('/')) {
+        // Handles dd/MM/yyyy
+        final parts = dobString.split('/');
+        if (parts.length == 3) {
+          final day = int.parse(parts[0]);
+          final month = int.parse(parts[1]);
+          final year = int.parse(parts[2]);
+          dob = DateTime(year, month, day);
+        }
+      } else {
+        // Try ISO format yyyy-MM-dd
+        dob = DateTime.tryParse(dobString);
+      }
+    } catch (e) {
+      return '';
+    }
+
     if (dob == null) {
-      // If parsing fails, return a default value or empty string
       return '';
     }
 
     final today = DateTime.now();
     int age = today.year - dob.year;
 
-    // If birthday hasn't occurred yet this year, subtract 1
     if (today.month < dob.month || (today.month == dob.month && today.day < dob.day)) {
       age--;
     }

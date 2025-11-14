@@ -4,6 +4,7 @@ import 'dart:developer';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:touchhealth/core/service/new_patient_data_service.dart';
 import 'package:touchhealth/data/source/postgres/postgres_service.dart';
 
 import '../../../core/cache/cache.dart';
@@ -59,70 +60,142 @@ class SignInCubit extends Cubit<SignInState> {
     return null;
   }
 
-  Future<void> userSignIn(
-      {required String email, required String password}) async {
+  static final PatientDataService dataService = PatientDataService();
+
+  Future<void> userSignIn({
+    required String email,
+    required String password,
+  }) async {
     emit(SignInLoading());
 
-    // Demo login credentials for testing
+    // -------------------------
+    // Demo login for testing
+    // -------------------------
     if (email.toLowerCase() == 'demo@touchhealth.com' && password == 'demo123') {
-      log("Demo login detected - bypassing Firebase auth");
-      
-      // Set demo user data in cache
-      await CacheData.setMapData(key: "userData", value: {
-        'name': 'Demo User',
-        'email': 'demo@touchhealth.com',
-        'uid': 'demo_user_001',
-        'offline': true,
-        'demo': true,
-      });
-      
+      log("Demo login detected - bypassing API auth");
+
+      await CacheData.setMapData(
+        key: "userData",
+        value: {
+          'name': 'Demo User',
+          'email': 'demo@touchhealth.com',
+          'uid': 'demo_user_001',
+          'offline': true,
+          'demo': true,
+        },
+      );
+
       emit(SignInSuccess());
       return;
     }
-    
+
     try {
-      // Use FirebaseService.logIn for consistent error handling and offline support
-      await FirebaseService.logIn(email: email, password: password);
-      
-      // Check if user is authenticated
-      User? user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        if (user.emailVerified) {
-          emit(SignInSuccess());
-        } else {
-          await FirebaseService.emailVerify();
-          emit(EmailNotVerified(message: "Email verification sent!"));
-        }
-      } else {
-        // Check for offline mode
-        final userData = CacheData.getMapData(key: "userData");
-        if (userData['offline'] == true) {
-          emit(SignInSuccess());
-        } else {
-          emit(SignInFailure(message: "Authentication failed"));
-        }
+      // -------------------------
+      // API login call
+      // -------------------------
+      final success = await dataService.logIn(email: email, password: password);
+
+      if (!success) {
+        emit(SignInFailure(message: "Invalid email or password"));
+        return;
       }
-    } on FirebaseAuthException catch (err) {
-      String? errMessage = _validateFirebaseException(err.code);
-      emit(SignInFailure(message: errMessage ?? err.code));
+
+      // -------------------------
+      // Cache returned user info
+      // -------------------------
+      final userData = await dataService.getCachedUser(); // returns Map<String, dynamic>
+      await CacheData.setMapData(key: "userData", value: {'userData': userData});
+
+      emit(SignInSuccess());
+
     } catch (err) {
       log("Sign in error: $err");
-      
-      // Handle network/timeout errors with offline fallback
-      if (err.toString().contains('network') || 
+
+      // -------------------------
+      // Offline fallback
+      // -------------------------
+      final cachedUserData = CacheData.getMapData(key: "userData");
+      if (cachedUserData['offline'] == true) {
+        log("Offline mode: using cached user");
+        emit(SignInSuccess());
+        return;
+      }
+
+      if (err.toString().contains('network') ||
           err.toString().contains('timeout') ||
           err.toString().contains('TimeoutException')) {
-        log("Network error detected, checking offline mode");
-        final userData = CacheData.getMapData(key: "userData");
-        if (userData['offline'] == true) {
-          emit(SignInSuccess());
-        } else {
-          emit(SignInFailure(message: "Network error. Please check your connection."));
-        }
+        emit(SignInFailure(message: "Network error. Please check your connection."));
       } else {
         emit(SignInFailure(message: err.toString()));
       }
     }
   }
+
+
+  // Future<void> userSignIn(
+  //     {required String email, required String password}) async {
+  //   emit(SignInLoading());
+
+  //   // Demo login credentials for testing
+  //   if (email.toLowerCase() == 'demo@touchhealth.com' && password == 'demo123') {
+  //     log("Demo login detected - bypassing Firebase auth");
+      
+  //     // Set demo user data in cache
+  //     await CacheData.setMapData(key: "userData", value: {
+  //       'name': 'Demo User',
+  //       'email': 'demo@touchhealth.com',
+  //       'uid': 'demo_user_001',
+  //       'offline': true,
+  //       'demo': true,
+  //     });
+      
+  //     emit(SignInSuccess());
+  //     return;
+  //   }
+    
+  //   try {
+  //     // Use FirebaseService.logIn for consistent error handling and offline support
+  //     await FirebaseService.logIn(email: email, password: password);
+      
+  //     // Check if user is authenticated
+  //     User? user = FirebaseAuth.instance.currentUser;
+  //     if (user != null) {
+  //       if (user.emailVerified) {
+  //         emit(SignInSuccess());
+  //       } else {
+  //         await FirebaseService.emailVerify();
+  //         emit(EmailNotVerified(message: "Email verification sent!"));
+  //       }
+  //     } else {
+  //       // Check for offline mode
+  //       final userData = CacheData.getMapData(key: "userData");
+  //       if (userData['offline'] == true) {
+  //         emit(SignInSuccess());
+  //       } else {
+  //         emit(SignInFailure(message: "Authentication failed"));
+  //       }
+  //     }
+  //   } on FirebaseAuthException catch (err) {
+  //     String? errMessage = _validateFirebaseException(err.code);
+  //     emit(SignInFailure(message: errMessage ?? err.code));
+  //   } catch (err) {
+  //     log("Sign in error: $err");
+      
+  //     // Handle network/timeout errors with offline fallback
+  //     if (err.toString().contains('network') || 
+  //         err.toString().contains('timeout') ||
+  //         err.toString().contains('TimeoutException')) {
+  //       log("Network error detected, checking offline mode");
+  //       final userData = CacheData.getMapData(key: "userData");
+  //       if (userData['offline'] == true) {
+  //         emit(SignInSuccess());
+  //       } else {
+  //         emit(SignInFailure(message: "Network error. Please check your connection."));
+  //       }
+  //     } else {
+  //       emit(SignInFailure(message: err.toString()));
+  //     }
+  //   }
+  // }
 
 }
