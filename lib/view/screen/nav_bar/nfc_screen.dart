@@ -667,9 +667,6 @@ class _NFCScreenState extends State<NFCScreen> {
           } catch (e) {
             log('Error accessing Download directory: $e');
             directory = await getExternalStorageDirectory();
-            if (directory == null) {
-              throw Exception('Could not access external storage');
-            }
           }
         } else {
           directory = await getApplicationDocumentsDirectory();
@@ -677,7 +674,7 @@ class _NFCScreenState extends State<NFCScreen> {
 
         String fileName =
             'medical_record_${DateTime.now().millisecondsSinceEpoch}.pdf';
-        String filePath = '${directory.path}/$fileName';
+        String filePath = '${directory?.path}/$fileName';
 
         log('Downloading PDF to: $filePath');
         updateDialog?.call(0.05, 'Establishing connection...', false);
