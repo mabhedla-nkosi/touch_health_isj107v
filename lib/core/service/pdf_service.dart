@@ -8,12 +8,13 @@ class PdfService {
     final pdf = pw.Document();
     final dateFmt = DateFormat('yyyy-MM-dd HH:mm');
 
-    Map<String, dynamic> patient = (record['patient'] ?? {}) as Map<String, dynamic>;
-    Map<String, dynamic> medical = (record['medical'] ?? {}) as Map<String, dynamic>;
-    Map<String, dynamic> vitals = (record['vitals'] ?? {}) as Map<String, dynamic>;
-    Map<String, dynamic> appointments = (record['appointments'] ?? {}) as Map<String, dynamic>;
-    Map<String, dynamic> insurance = (record['insurance'] ?? {}) as Map<String, dynamic>;
-    Map<String, dynamic> medicalHistory = (record['medicalHistory'] ?? {}) as Map<String, dynamic>;
+    // Safely extract nested maps with type checking
+    Map<String, dynamic> patient = _safeMap(record['patient']);
+    Map<String, dynamic> medical = _safeMap(record['medical']);
+    Map<String, dynamic> vitals = _safeMap(record['vitals']);
+    Map<String, dynamic> appointments = _safeMap(record['appointments']);
+    Map<String, dynamic> insurance = _safeMap(record['insurance']);
+    Map<String, dynamic> medicalHistory = _safeMap(record['medicalHistory']);
 
     pw.Widget sectionTitle(String text) => pw.Padding(
       padding: const pw.EdgeInsets.only(top: 16, bottom: 8),
@@ -101,7 +102,7 @@ class PdfService {
 
           // Medications
           sectionTitle('Medications'),
-          if ((record['medications'] as List?)?.isNotEmpty == true)
+          if (_safeList(record['medications']).isNotEmpty)
             pw.Table(
               border: pw.TableBorder.all(width: 0.5, color: PdfColors.grey600),
               columnWidths: {
@@ -122,25 +123,27 @@ class PdfService {
                     pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text('Start Date')),
                   ],
                 ),
-                ...((record['medications'] as List).map<pw.TableRow>((m) => pw.TableRow(children: [
-                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(_safe(m['name']))),
-                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(_safe(m['dosage']))),
-                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(_safe(m['frequency']))),
-                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(_safe(m['prescribedBy']))),
-                      pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(_safe(m['startDate']))),
-                    ])))
+                ..._safeList(record['medications']).map<pw.TableRow>((m) {
+                      final medication = _safeMap(m);
+                      return pw.TableRow(children: [
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(_safe(medication['name']))),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(_safe(medication['dosage']))),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(_safe(medication['frequency']))),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(_safe(medication['prescribedBy']))),
+                        pw.Padding(padding: const pw.EdgeInsets.all(6), child: pw.Text(_safe(medication['startDate']))),
+                      ]);
+                    })
               ],
             )
           else
             pw.Text('-'),
-
           // Lab Results
           sectionTitle('Recent Lab Results'),
           labeledRow('Date', _safe(record['labResults']?['date'])),
-          if ((record['labResults']?['results'] as Map?) != null)
-            ...((record['labResults']['results'] as Map).entries.map((e) {
+          if (_safeMap(record['labResults']).isNotEmpty)
+            ..._safeMap(_safeMap(record['labResults'])['results']).entries.map((e) {
               final k = e.key.toString();
-              final v = e.value as Map<String, dynamic>;
+              final v = _safeMap(e.value);
               final unit = v['unit']?.toString() ?? '';
               final valueStr = v.containsKey('value')
                   ? '${v['value']} $unit'
@@ -152,7 +155,7 @@ class PdfService {
                 padding: const pw.EdgeInsets.only(bottom: 2),
                 child: pw.Text('- $k: $valueStr${status != null ? ' ($status)' : ''}'),
               );
-            })),
+            }).toList(),
 
           // Appointments
           sectionTitle('Appointments'),
@@ -174,5 +177,24 @@ class PdfService {
     );
 
     return pdf.save();
+  }
+
+  // Helper method to safely convert values to Map<String, dynamic>
+  static Map<String, dynamic> _safeMap(dynamic value) {
+    if (value is Map<String, dynamic>) {
+      return value;
+    }
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+    return {};
+  }
+
+  // Helper method to safely convert values to List
+  static List<dynamic> _safeList(dynamic value) {
+    if (value is List) {
+      return value;
+    }
+    return [];
   }
 }

@@ -12,6 +12,12 @@ import 'package:touchhealth/core/service/pdf_service.dart';
 import 'package:printing/printing.dart';
 import 'package:touchhealth/core/service/patient_lookup_service.dart';
 import 'package:touchhealth/core/router/routes.dart';
+import 'dart:io';
+import 'dart:developer';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:share_plus/share_plus.dart';
 
 class PatientDetailsScreen extends StatefulWidget {
   final Map<String, dynamic> patient;
@@ -29,6 +35,8 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
   String? _practitionerName;
   String? _practitionerEmail;
   List<Map<String, dynamic>> _ledgerEntries = [];
+
+  
 
   @override
   void initState() {
@@ -621,6 +629,164 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
     }
   }
 
+  Future<void> _downloadMedicalRecordPdf() async {
+    if (_currentRecord == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Medical record not loaded yet')),
+      );
+      return;
+    }
+
+    try {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(color: ColorManager.green),
+              SizedBox(height: 16),
+              Text('Generating PDF...'),
+            ],
+          ),
+        ),
+      );
+
+      // Generate PDF directly with the current record
+      final bytes = await PdfService.buildMedicalRecordPdf(_currentRecord ?? {});
+
+      // Get downloads directory
+      Directory? directory;
+      if (Platform.isAndroid) {
+        // For Android 11+, we need to request MANAGE_EXTERNAL_STORAGE
+        // First try to use the standard Downloads directory
+        try {
+          // Request permission
+          final status = await Permission.manageExternalStorage.request();
+          
+          if (status.isDenied) {
+            // Try the older storage permission for older Android versions
+            final oldStatus = await Permission.storage.request();
+            if (!oldStatus.isGranted) {
+              if (!mounted) return;
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Storage permission is required to download files')),
+              );
+              return;
+            }
+          }
+          
+          // Try to access Downloads directory
+          directory = Directory('/storage/emulated/0/Download');
+          if (!await directory.exists()) {
+            try {
+              await directory.create(recursive: true);
+            } catch (e) {
+              log('Could not create Download directory: $e');
+              directory = await getExternalStorageDirectory();
+            }
+          }
+        } catch (e) {
+          log('Error accessing Download directory: $e');
+          // Fallback to app external cache directory
+          directory = await getExternalStorageDirectory();
+        }
+      } else if (Platform.isIOS) {
+        directory = await getApplicationDocumentsDirectory();
+      }
+
+      if (directory == null) {
+        if (!mounted) return;
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not access storage')),
+        );
+        return;
+      }
+
+      // Create filename - safely extract patient info
+      String patientName = 'patient';
+      try {
+        final patientInfo = _currentRecord!['patient'];
+        if (patientInfo is Map && patientInfo.containsKey('name')) {
+          patientName = (patientInfo['name'] ?? 'patient').toString().replaceAll(' ', '_');
+        } else if (_currentRecord!.containsKey('name')) {
+          patientName = (_currentRecord!['name'] ?? 'patient').toString().replaceAll(' ', '_');
+        }
+      } catch (_) {
+        // Use default if extraction fails
+      }
+
+      final timestamp = DateTime.now().millisecondsSinceEpoch;
+      final fileName = 'MedicalRecord_${patientName}_$timestamp.pdf';
+      final filePath = '${directory.path}/$fileName';
+
+      // Save file
+      final file = File(filePath);
+      await file.writeAsBytes(bytes);
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+
+      // Show success dialog
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('PDF Downloaded Successfully'),
+          content: Text('File saved to:\n$fileName'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text('Close'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                try {
+                  await OpenFilex.open(
+                    filePath,
+                    type: 'application/pdf',
+                  );
+                } catch (e) {
+                  log('Error opening file: $e');
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Could not open file: $e')),
+                  );
+                }
+              },
+              child: const Text('Open'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                try {
+                  await Share.shareXFiles(
+                    [XFile(filePath)],
+                    text: 'Medical Record PDF',
+                  );
+                } catch (e) {
+                  log('Error sharing file: $e');
+                }
+              },
+              child: const Text('Share'),
+            ),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+      log('Error downloading PDF: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to download PDF: $e')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -743,6 +909,23 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildPatientHeader(patient),
+          Gap(16.h),
+          // Download button
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: _downloadMedicalRecordPdf,
+              icon: Icon(Icons.download, color: Colors.white),
+              label: Text('Download Medical Record'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: ColorManager.green,
+                padding: EdgeInsets.symmetric(vertical: 12.h),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.r),
+                ),
+              ),
+            ),
+          ),
           if (_hasConsent == false) ...[
             Gap(12.h),
             _buildConsentWarning(),
@@ -944,7 +1127,7 @@ class _PatientDetailsScreenState extends State<PatientDetailsScreen> {
                   e.key != 'temperature')
               .map((e) {
             final v = Map<String, dynamic>.from(e.value ?? {});
-            final label = (e.key as String)
+            final label = e.key
                 .replaceAll(RegExp(r'(?<!^)([A-Z])'), ' \\1')
                 .replaceAll('_', ' ')
                 .trim();
